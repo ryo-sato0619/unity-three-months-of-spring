@@ -1,0 +1,50 @@
+* text=auto
+
+# ------------------------------------------------------------
+#  テキスト
+# ------------------------------------------------------------
+*.cs          text diff=csharp
+*.ink         text
+*.md          text
+*.json        text
+*.txt         text
+*.shader      text
+*.shadergraph text
+*.hlsl        text
+*.cginc       text
+*.gitignore   text
+*.gitattributes text
+
+# ------------------------------------------------------------
+#  Unity の YAML
+#  改行やマージで壊れやすいので LF 固定 + UnityYAMLMerge を指定する。
+#  UnityYAMLMerge を使うには git の merge.unityyamlmerge 設定が必要
+#  (未設定でも通常のマージにフォールバックするだけで、壊れはしない)。
+# ------------------------------------------------------------
+*.unity        text eol=lf merge=unityyamlmerge
+*.prefab       text eol=lf merge=unityyamlmerge
+*.asset        text eol=lf merge=unityyamlmerge
+*.meta         text eol=lf merge=unityyamlmerge
+*.mat          text eol=lf merge=unityyamlmerge
+*.anim         text eol=lf merge=unityyamlmerge
+*.controller   text eol=lf merge=unityyamlmerge
+*.physicMaterial text eol=lf merge=unityyamlmerge
+*.physicsMaterial2D text eol=lf merge=unityyamlmerge
+
+# ------------------------------------------------------------
+#  バイナリ
+# ------------------------------------------------------------
+*.ttf   binary
+*.otf   binary
+*.ttc   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.psd   binary
+*.gif   binary
+*.wav   binary
+*.mp3   binary
+*.ogg   binary
+*.fbx   binary
+*.dll   binary
+*.unitypackage binary
