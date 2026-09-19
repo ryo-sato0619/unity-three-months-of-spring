@@ -103,6 +103,7 @@ docs/
 | `# chapter: 第二章　日常と、気持ちの変化` | 画面左上の章タイトル |
 | `# bg: office_evening` | 背景。画像かグラデーションのキー |
 | `# bgm: warm` | BGM。`Assets/Resources/Bgm/` のファイル名 |
+| `# sprite: haruka_smile` | 立ち絵。`none` で非表示 |
 | `# ending: true_spring` | エンディング ID。到達記録に使う |
 
 ### 背景と BGM の差し替え
@@ -111,6 +112,11 @@ docs/
 |---|---|---|
 | 背景 | `Assets/Resources/Backgrounds/<キー>.jpg` | `BackgroundPalette.cs` の色グラデーションで代用 |
 | BGM | `Assets/Resources/Bgm/<キー>.ogg` | 無音（ゲームは動く） |
+| 立ち絵 | `Assets/Resources/Sprites/<キー>.png` | 立ち絵なし（ゲームは動く） |
+
+**立ち絵はまだ未配置です。** 表示する仕組みだけ実装してあるので、
+6 枚の PNG を置けば有効になります。用意の仕方と仕様は
+[docs/character-sprites.md](docs/character-sprites.md) を参照してください。
 
 素材の出典とライセンスは [CREDITS.md](CREDITS.md) を参照。
 再配布が明示的に許諾されているもの（Unsplash License / CC BY 4.0）だけを選んでいます。
@@ -146,7 +152,8 @@ docs/
 
 以下は未実装です。
 
-- 立ち絵・効果音
+- **立ち絵の素材**（表示する仕組みは実装済み。[docs/character-sprites.md](docs/character-sprites.md)）
+- 効果音
 - 既読スキップ、オート再生
 - 画面ごとのトランジション（背景は即時切り替え）
 - 日本語フォントは OS のものを実行時に読み込むため、**配布ビルドでは

@@ -46,6 +46,9 @@ namespace ThreeMonthsOfSpring
         public string background;
         public string bgm;
 
+        /// <summary>表示中の立ち絵のキー。空なら立ち絵なし。</summary>
+        public string sprite;
+
         // --- 物語の進行状態 ---
         public string inkState;
 

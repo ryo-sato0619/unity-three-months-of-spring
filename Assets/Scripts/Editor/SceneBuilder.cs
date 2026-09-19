@@ -48,6 +48,7 @@ namespace ThreeMonthsOfSpring.EditorTools
             // --- 描画順 = ヒエラルキー順。後に作ったものほど手前に来る。 ---
             CreateBackground(canvas.transform, out RectTransform backgroundArea, out Image background);
             Button advanceArea = CreateAdvanceArea(canvas.transform);
+            Image characterSprite = CreateCharacterSprite(canvas.transform);
             TextMeshProUGUI chapterLabel = CreateChapterLabel(canvas.transform);
 
             BuildMessageWindow(
@@ -120,6 +121,7 @@ namespace ThreeMonthsOfSpring.EditorTools
             Assign(so, "inkFile", LoadInkFile());
             Assign(so, "backgroundArea", backgroundArea);
             Assign(so, "background", background);
+            Assign(so, "characterSprite", characterSprite);
             Assign(so, "chapterLabel", chapterLabel);
             Assign(so, "speakerPanel", speakerPanel);
             Assign(so, "speakerLabel", speakerLabel);
@@ -317,6 +319,31 @@ namespace ThreeMonthsOfSpring.EditorTools
             Button button = go.AddComponent<Button>();
             button.transition = Selectable.Transition.None;
             return button;
+        }
+
+        /// <summary>
+        /// 立ち絵。メッセージウィンドウより奥（階層の手前側）に置くことで、
+        /// 足元がウィンドウに隠れる一般的なノベルゲームの見え方になる。
+        /// </summary>
+        private static Image CreateCharacterSprite(Transform parent)
+        {
+            GameObject go = NewUI("CharacterSprite", parent);
+            var rt = (RectTransform)go.transform;
+
+            // 画面のやや右寄り、下端基準。
+            rt.anchorMin = new Vector2(0.72f, 0f);
+            rt.anchorMax = new Vector2(0.72f, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.anchoredPosition = new Vector2(0f, 150f);
+            rt.sizeDelta = new Vector2(820f, 1000f);
+
+            Image image = go.AddComponent<Image>();
+            image.raycastTarget = false;
+            // 縦横比を保ったまま枠内に収める。差し替えた立ち絵の比率が違っても歪まない。
+            image.preserveAspect = true;
+            go.SetActive(false);
+
+            return image;
         }
 
         private static TextMeshProUGUI CreateChapterLabel(Transform parent)

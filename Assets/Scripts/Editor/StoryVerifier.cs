@@ -27,6 +27,7 @@ namespace ThreeMonthsOfSpring.EditorTools
             public readonly List<string> PathsWithoutEnding = new List<string>();
             public readonly HashSet<string> BackgroundKeys = new HashSet<string>();
             public readonly HashSet<string> BgmKeys = new HashSet<string>();
+            public readonly HashSet<string> SpriteKeys = new HashSet<string>();
             public int TotalPaths;
             public int MaxDepth;
         }
@@ -137,6 +138,14 @@ namespace ThreeMonthsOfSpring.EditorTools
                 sb.AppendLine($"  {(hasClip ? "OK  " : "未配置")}  {key,-18} {(hasClip ? "読み込み可" : "無音になります")}");
             }
 
+            sb.AppendLine();
+            sb.AppendLine("--- 立ち絵 (Resources/Sprites) ---");
+            foreach (string key in new SortedSet<string>(report.SpriteKeys))
+            {
+                bool exists = CharacterSpriteProvider.Exists(key);
+                sb.AppendLine($"  {(exists ? "OK  " : "未配置")}  {key,-20} {(exists ? "読み込み可" : "非表示になります")}");
+            }
+
             if (ok)
             {
                 Debug.Log(sb.ToString() + "\n検証に成功しました。");
@@ -170,6 +179,14 @@ namespace ThreeMonthsOfSpring.EditorTools
                     else if (tag.StartsWith("bgm:"))
                     {
                         report.BgmKeys.Add(tag.Substring(4).Trim());
+                    }
+                    else if (tag.StartsWith("sprite:"))
+                    {
+                        string key = tag.Substring(7).Trim();
+                        if (!CharacterSpriteProvider.IsHideKey(key))
+                        {
+                            report.SpriteKeys.Add(key);
+                        }
                     }
                 }
             }

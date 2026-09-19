@@ -64,6 +64,8 @@ namespace ThreeMonthsOfSpring
         [Header("UI - 本編")]
         [SerializeField] private RectTransform backgroundArea;
         [SerializeField] private Image background;
+        [SerializeField] private Image characterSprite;
+        [SerializeField] private float spriteFadeSeconds = 0.25f;
         [SerializeField] private TMP_Text chapterLabel;
         [SerializeField] private GameObject speakerPanel;
         [SerializeField] private TMP_Text speakerLabel;
@@ -138,6 +140,8 @@ namespace ThreeMonthsOfSpring
         private string currentSpeaker = string.Empty;
         private string currentText = string.Empty;
         private string currentBackground = "street_morning";
+        private string currentSprite = string.Empty;
+        private Coroutine spriteFadeRoutine;
 
         private bool slotPanelIsSaveMode;
         private Vector2Int lastScreenSize;
@@ -256,6 +260,8 @@ namespace ThreeMonthsOfSpring
             currentChapter = string.Empty;
             currentSpeaker = string.Empty;
             currentText = string.Empty;
+            currentSprite = string.Empty;
+            ApplyCharacterSpriteInstantly();
 
             SetBackground("street_morning");
             audioDirector.Play("title");
@@ -410,6 +416,9 @@ namespace ThreeMonthsOfSpring
                         case "bgm":
                             audioDirector.Play(value);
                             break;
+                        case "sprite":
+                            SetCharacterSprite(value);
+                            break;
                         case "ending":
                             reachedEndingId = value;
                             break;
@@ -455,6 +464,107 @@ namespace ThreeMonthsOfSpring
             background.sprite = BackgroundProvider.Get(key);
             background.color = Color.white;
             FitBackground();
+        }
+
+        /// <summary>
+        /// 立ち絵を切り替える。キーが "none" または空なら隠す。
+        /// 素材が未配置の場合も静かに隠すだけで、進行は止めない。
+        /// </summary>
+        private void SetCharacterSprite(string key)
+        {
+            if (currentSprite == key)
+            {
+                return;
+            }
+
+            currentSprite = key ?? string.Empty;
+            Sprite sprite = CharacterSpriteProvider.Get(currentSprite);
+
+            if (sprite == null && !CharacterSpriteProvider.IsHideKey(currentSprite))
+            {
+                Debug.Log($"[立ち絵] 未配置のためスキップします: Resources/{CharacterSpriteProvider.ResourceFolder}{currentSprite}");
+            }
+
+            ApplyCharacterSprite(sprite, animate: true);
+        }
+
+        /// <summary>ロード時など、フェードせずに即座に反映したい場合に使う。</summary>
+        private void ApplyCharacterSpriteInstantly()
+        {
+            ApplyCharacterSprite(CharacterSpriteProvider.Get(currentSprite), animate: false);
+        }
+
+        private void ApplyCharacterSprite(Sprite sprite, bool animate)
+        {
+            if (spriteFadeRoutine != null)
+            {
+                StopCoroutine(spriteFadeRoutine);
+                spriteFadeRoutine = null;
+            }
+
+            if (sprite == null)
+            {
+                if (animate && characterSprite.gameObject.activeSelf)
+                {
+                    spriteFadeRoutine = StartCoroutine(FadeOutCharacter());
+                }
+                else
+                {
+                    characterSprite.gameObject.SetActive(false);
+                }
+
+                return;
+            }
+
+            characterSprite.sprite = sprite;
+            characterSprite.gameObject.SetActive(true);
+
+            if (animate)
+            {
+                spriteFadeRoutine = StartCoroutine(FadeInCharacter());
+            }
+            else
+            {
+                characterSprite.color = Color.white;
+            }
+        }
+
+        private IEnumerator FadeInCharacter()
+        {
+            float elapsed = 0f;
+            Color c = characterSprite.color;
+            c.a = 0f;
+            characterSprite.color = c;
+
+            while (elapsed < spriteFadeSeconds)
+            {
+                elapsed += Time.deltaTime;
+                c.a = Mathf.Clamp01(elapsed / spriteFadeSeconds);
+                characterSprite.color = c;
+                yield return null;
+            }
+
+            characterSprite.color = Color.white;
+            spriteFadeRoutine = null;
+        }
+
+        private IEnumerator FadeOutCharacter()
+        {
+            float elapsed = 0f;
+            Color c = characterSprite.color;
+            float from = c.a;
+
+            while (elapsed < spriteFadeSeconds)
+            {
+                elapsed += Time.deltaTime;
+                c.a = Mathf.Lerp(from, 0f, Mathf.Clamp01(elapsed / spriteFadeSeconds));
+                characterSprite.color = c;
+                yield return null;
+            }
+
+            characterSprite.gameObject.SetActive(false);
+            characterSprite.color = Color.white;
+            spriteFadeRoutine = null;
         }
 
         /// <summary>
@@ -747,6 +857,7 @@ namespace ThreeMonthsOfSpring
                 text = currentText,
                 background = currentBackground,
                 bgm = audioDirector.CurrentKey,
+                sprite = currentSprite,
                 inkState = story.state.ToJson(),
                 log = new List<LogEntry>(backlog),
             };
@@ -804,6 +915,11 @@ namespace ThreeMonthsOfSpring
             ApplySpeakerToUi();
             SetBackground(string.IsNullOrEmpty(data.background) ? "office_day" : data.background);
             audioDirector.Play(data.bgm);
+
+            // 立ち絵はフェードなしで即座に戻す。ロード直後にふわっと出ると違和感があるため。
+            currentSprite = data.sprite ?? string.Empty;
+            ApplyCharacterSpriteInstantly();
+
             ShowLineInstantly(currentText);
 
             titlePanel.SetActive(false);

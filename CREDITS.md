@@ -60,6 +60,25 @@ http://creativecommons.org/licenses/by/4.0/
 
 ---
 
+## 立ち絵
+
+**未配置です。** 表示する仕組みだけが実装されています。
+用意の仕方は [docs/character-sprites.md](docs/character-sprites.md) を参照してください。
+
+素材を追加したら、この節とゲーム内クレジット
+（`NovelGameController.CreditsText`）の両方に追記してください。
+
+生成 AI を使った場合の記載例:
+
+```
+立ち絵
+
+羽田春香の立ち絵は画像生成AI（<サービス名>）で生成したものです。
+生成物の利用条件は <サービス名> の利用規約に従います。
+```
+
+---
+
 ## ソフトウェア
 
 | | ライセンス |
