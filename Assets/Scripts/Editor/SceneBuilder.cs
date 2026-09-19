@@ -26,10 +26,14 @@ namespace ThreeMonthsOfSpring.EditorTools
         private static readonly Color AccentColor = new Color(0.86f, 0.62f, 0.42f, 0.95f);
         private static readonly Color ChoiceIdle = new Color(0.10f, 0.12f, 0.17f, 0.92f);
         private static readonly Color TextColor = new Color(0.96f, 0.96f, 0.94f, 1f);
+        private static readonly Color OverlayColor = new Color(0.02f, 0.03f, 0.05f, 0.95f);
 
         [MenuItem("Tools/三か月の春/2. シーンを生成する")]
         public static void BuildScene()
         {
+            PlayerSettings.companyName = "ryo-sato0619";
+            PlayerSettings.productName = "three-months-of-spring";
+
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             CreateCamera();
@@ -39,8 +43,10 @@ namespace ThreeMonthsOfSpring.EditorTools
             var controller = canvas.gameObject.AddComponent<NovelGameController>();
             var so = new SerializedObject(controller);
 
-            // --- 描画順 = ヒエラルキー順。先に作ったものほど奥に来る。 ---
-            Image background = CreateBackground(canvas.transform);
+            AudioDirector audio = CreateAudio(canvas.transform);
+
+            // --- 描画順 = ヒエラルキー順。後に作ったものほど手前に来る。 ---
+            CreateBackground(canvas.transform, out RectTransform backgroundArea, out Image background);
             Button advanceArea = CreateAdvanceArea(canvas.transform);
             TextMeshProUGUI chapterLabel = CreateChapterLabel(canvas.transform);
 
@@ -51,14 +57,17 @@ namespace ThreeMonthsOfSpring.EditorTools
                 out TextMeshProUGUI bodyLabel,
                 out GameObject continueIndicator);
 
-            BuildChoiceArea(canvas.transform, out RectTransform choiceRoot, out Button choiceTemplate);
-
-            BuildTitlePanel(
+            BuildControlBar(
                 canvas.transform,
-                out GameObject titlePanel,
-                out TextMeshProUGUI endingListLabel,
-                out Button startButton,
-                out Button clearRecordButton);
+                out GameObject controlBar,
+                out Button barLog,
+                out Button barSave,
+                out Button barLoad,
+                out Button barBgm,
+                out TextMeshProUGUI barBgmLabel,
+                out Button barTitle);
+
+            BuildChoiceArea(canvas.transform, out RectTransform choiceRoot, out Button choiceTemplate);
 
             BuildResultPanel(
                 canvas.transform,
@@ -66,24 +75,86 @@ namespace ThreeMonthsOfSpring.EditorTools
                 out TextMeshProUGUI resultLabel,
                 out Button backToTitleButton);
 
+            BuildTitlePanel(
+                canvas.transform,
+                out GameObject titlePanel,
+                out TextMeshProUGUI endingListLabel,
+                out Button startButton,
+                out Button titleLoadButton,
+                out Button clearRecordButton);
+
+            // ログとスロットはタイトルより手前。タイトル画面からロードを開けるようにするため。
+            BuildLogPanel(
+                canvas.transform,
+                out GameObject logPanel,
+                out ScrollRect logScrollRect,
+                out TextMeshProUGUI logText,
+                out Button logCloseButton);
+
+            BuildSlotPanel(
+                canvas.transform,
+                out GameObject slotPanel,
+                out TextMeshProUGUI slotPanelTitle,
+                out Button[] slotButtons,
+                out TextMeshProUGUI[] slotLabels,
+                out Button slotCloseButton);
+
+            // 確認ダイアログは最前面。スロット画面の上にも出るため。
+            BuildConfirmPanel(
+                canvas.transform,
+                out GameObject confirmPanel,
+                out TextMeshProUGUI confirmLabel,
+                out Button confirmYesButton,
+                out Button confirmNoButton);
+
             // --- 参照の配線 ---
-            so.FindProperty("inkFile").objectReferenceValue = LoadInkFile();
-            so.FindProperty("background").objectReferenceValue = background;
-            so.FindProperty("chapterLabel").objectReferenceValue = chapterLabel;
-            so.FindProperty("speakerPanel").objectReferenceValue = speakerPanel;
-            so.FindProperty("speakerLabel").objectReferenceValue = speakerLabel;
-            so.FindProperty("bodyLabel").objectReferenceValue = bodyLabel;
-            so.FindProperty("continueIndicator").objectReferenceValue = continueIndicator;
-            so.FindProperty("choiceRoot").objectReferenceValue = choiceRoot;
-            so.FindProperty("choiceTemplate").objectReferenceValue = choiceTemplate;
-            so.FindProperty("advanceArea").objectReferenceValue = advanceArea;
-            so.FindProperty("titlePanel").objectReferenceValue = titlePanel;
-            so.FindProperty("endingListLabel").objectReferenceValue = endingListLabel;
-            so.FindProperty("startButton").objectReferenceValue = startButton;
-            so.FindProperty("clearRecordButton").objectReferenceValue = clearRecordButton;
-            so.FindProperty("resultPanel").objectReferenceValue = resultPanel;
-            so.FindProperty("resultLabel").objectReferenceValue = resultLabel;
-            so.FindProperty("backToTitleButton").objectReferenceValue = backToTitleButton;
+            Assign(so, "inkFile", LoadInkFile());
+            Assign(so, "backgroundArea", backgroundArea);
+            Assign(so, "background", background);
+            Assign(so, "chapterLabel", chapterLabel);
+            Assign(so, "speakerPanel", speakerPanel);
+            Assign(so, "speakerLabel", speakerLabel);
+            Assign(so, "bodyLabel", bodyLabel);
+            Assign(so, "continueIndicator", continueIndicator);
+            Assign(so, "choiceRoot", choiceRoot);
+            Assign(so, "choiceTemplate", choiceTemplate);
+            Assign(so, "advanceArea", advanceArea);
+
+            Assign(so, "controlBar", controlBar);
+            Assign(so, "barLogButton", barLog);
+            Assign(so, "barSaveButton", barSave);
+            Assign(so, "barLoadButton", barLoad);
+            Assign(so, "barBgmButton", barBgm);
+            Assign(so, "barBgmLabel", barBgmLabel);
+            Assign(so, "barTitleButton", barTitle);
+
+            Assign(so, "logPanel", logPanel);
+            Assign(so, "logScrollRect", logScrollRect);
+            Assign(so, "logText", logText);
+            Assign(so, "logCloseButton", logCloseButton);
+
+            Assign(so, "slotPanel", slotPanel);
+            Assign(so, "slotPanelTitle", slotPanelTitle);
+            AssignArray(so, "slotButtons", slotButtons);
+            AssignArray(so, "slotLabels", slotLabels);
+            Assign(so, "slotCloseButton", slotCloseButton);
+
+            Assign(so, "confirmPanel", confirmPanel);
+            Assign(so, "confirmLabel", confirmLabel);
+            Assign(so, "confirmYesButton", confirmYesButton);
+            Assign(so, "confirmNoButton", confirmNoButton);
+
+            Assign(so, "titlePanel", titlePanel);
+            Assign(so, "endingListLabel", endingListLabel);
+            Assign(so, "startButton", startButton);
+            Assign(so, "titleLoadButton", titleLoadButton);
+            Assign(so, "clearRecordButton", clearRecordButton);
+            Assign(so, "resultPanel", resultPanel);
+            Assign(so, "resultLabel", resultLabel);
+            Assign(so, "backToTitleButton", backToTitleButton);
+
+            Assign(so, "audioDirector", audio);
+
             so.ApplyModifiedPropertiesWithoutUndo();
 
             Directory.CreateDirectory(Path.GetDirectoryName(ScenePath)!);
@@ -114,13 +185,42 @@ namespace ThreeMonthsOfSpring.EditorTools
             return inkFile;
         }
 
+        private static void Assign(SerializedObject so, string property, Object value)
+        {
+            SerializedProperty p = so.FindProperty(property);
+            if (p == null)
+            {
+                Debug.LogError($"[SceneBuilder] フィールドが見つかりません: {property}");
+                return;
+            }
+
+            p.objectReferenceValue = value;
+        }
+
+        private static void AssignArray(SerializedObject so, string property, Object[] values)
+        {
+            SerializedProperty p = so.FindProperty(property);
+            if (p == null)
+            {
+                Debug.LogError($"[SceneBuilder] フィールドが見つかりません: {property}");
+                return;
+            }
+
+            p.arraySize = values.Length;
+            for (int i = 0; i < values.Length; i++)
+            {
+                p.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+            }
+        }
+
         // ------------------------------------------------------------
         //  土台
         // ------------------------------------------------------------
 
         private static void CreateCamera()
         {
-            var go = new GameObject("Main Camera", typeof(Camera));
+            // AudioListener が無いと BGM が一切鳴らないので必ず付ける。
+            var go = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
             go.tag = "MainCamera";
             Camera camera = go.GetComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
@@ -149,18 +249,45 @@ namespace ThreeMonthsOfSpring.EditorTools
             return canvas;
         }
 
+        private static AudioDirector CreateAudio(Transform parent)
+        {
+            var go = new GameObject("Audio", typeof(AudioDirector), typeof(AudioSource), typeof(AudioSource));
+            go.transform.SetParent(parent, false);
+
+            AudioSource[] sources = go.GetComponents<AudioSource>();
+            var director = go.GetComponent<AudioDirector>();
+
+            var so = new SerializedObject(director);
+            so.FindProperty("sourceA").objectReferenceValue = sources[0];
+            so.FindProperty("sourceB").objectReferenceValue = sources[1];
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            return director;
+        }
+
         // ------------------------------------------------------------
         //  各パーツ
         // ------------------------------------------------------------
 
-        private static Image CreateBackground(Transform parent)
+        private static void CreateBackground(Transform parent, out RectTransform area, out Image image)
         {
-            GameObject go = NewUI("Background", parent);
-            StretchFull(go);
-            Image image = go.AddComponent<Image>();
+            // 画面からはみ出した分を隠すための外枠。写真を縦横比を保ったまま敷き詰めるのに使う。
+            GameObject areaGo = NewUI("BackgroundArea", parent);
+            StretchFull(areaGo);
+            areaGo.AddComponent<RectMask2D>();
+            area = (RectTransform)areaGo.transform;
+
+            GameObject go = NewUI("Background", areaGo.transform);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = new Vector2(1920f, 1080f);
+
+            image = go.AddComponent<Image>();
             image.color = new Color(0.12f, 0.14f, 0.18f, 1f);
             image.raycastTarget = false;
-            return image;
         }
 
         private static Button CreateAdvanceArea(Transform parent)
@@ -212,7 +339,6 @@ namespace ThreeMonthsOfSpring.EditorTools
             panel.color = PanelColor;
             panel.raycastTarget = false;
 
-            // 本文
             GameObject body = NewUI("BodyLabel", window.transform);
             var bodyRt = (RectTransform)body.transform;
             bodyRt.anchorMin = Vector2.zero;
@@ -222,7 +348,6 @@ namespace ThreeMonthsOfSpring.EditorTools
             bodyLabel = AddText(body, string.Empty, 38f, TextAlignmentOptions.TopLeft);
             bodyLabel.lineSpacing = 12f;
 
-            // 話者名
             speakerPanel = NewUI("SpeakerPanel", window.transform);
             var speakerRt = (RectTransform)speakerPanel.transform;
             speakerRt.anchorMin = new Vector2(0f, 1f);
@@ -240,7 +365,6 @@ namespace ThreeMonthsOfSpring.EditorTools
             speakerLabel = AddText(speakerTextGo, string.Empty, 30f, TextAlignmentOptions.Center);
             speakerLabel.color = new Color(0.08f, 0.07f, 0.06f, 1f);
 
-            // 次へ進めることを示す ▼
             continueIndicator = NewUI("ContinueIndicator", window.transform);
             var indicatorRt = (RectTransform)continueIndicator.transform;
             indicatorRt.anchorMin = new Vector2(1f, 0f);
@@ -251,6 +375,66 @@ namespace ThreeMonthsOfSpring.EditorTools
             TextMeshProUGUI indicatorText =
                 AddText(continueIndicator, "▼", 30f, TextAlignmentOptions.Center);
             indicatorText.color = AccentColor;
+        }
+
+        private static void BuildControlBar(
+            Transform parent,
+            out GameObject bar,
+            out Button logButton,
+            out Button saveButton,
+            out Button loadButton,
+            out Button bgmButton,
+            out TextMeshProUGUI bgmLabel,
+            out Button titleButton)
+        {
+            bar = NewUI("ControlBar", parent);
+            var rt = (RectTransform)bar.transform;
+            rt.anchorMin = new Vector2(1f, 0f);
+            rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            // メッセージウィンドウ (高さ330 + 下余白60) のすぐ上。
+            rt.anchoredPosition = new Vector2(-90f, 60f + 330f + 12f);
+            rt.sizeDelta = new Vector2(0f, 56f);
+
+            var layout = bar.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 10f;
+            layout.childAlignment = TextAnchor.MiddleRight;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = true;
+
+            var fitter = bar.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            logButton = CreateBarButton(bar.transform, "BarLog", "ログ", 120f, out _);
+            saveButton = CreateBarButton(bar.transform, "BarSave", "セーブ", 140f, out _);
+            loadButton = CreateBarButton(bar.transform, "BarLoad", "ロード", 140f, out _);
+            bgmButton = CreateBarButton(bar.transform, "BarBgm", "BGM ON", 160f, out bgmLabel);
+            titleButton = CreateBarButton(bar.transform, "BarTitle", "タイトル", 150f, out _);
+        }
+
+        private static Button CreateBarButton(
+            Transform parent, string name, string caption, float width, out TextMeshProUGUI label)
+        {
+            GameObject go = NewUI(name, parent);
+
+            Image image = go.AddComponent<Image>();
+            image.color = ChoiceIdle;
+
+            Button button = go.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            var element = go.AddComponent<LayoutElement>();
+            element.preferredWidth = width;
+            element.preferredHeight = 56f;
+
+            GameObject labelGo = NewUI("Label", go.transform);
+            StretchFull(labelGo);
+            label = AddText(labelGo, caption, 24f, TextAlignmentOptions.Center);
+            label.raycastTarget = false;
+
+            return button;
         }
 
         private static void BuildChoiceArea(Transform parent, out RectTransform choiceRoot, out Button choiceTemplate)
@@ -274,7 +458,6 @@ namespace ThreeMonthsOfSpring.EditorTools
             var fitter = root.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            // 実行時に複製される雛形。Awake で非アクティブにされる。
             GameObject template = NewUI("ChoiceTemplate", root.transform);
             Image image = template.AddComponent<Image>();
             image.color = ChoiceIdle;
@@ -300,11 +483,172 @@ namespace ThreeMonthsOfSpring.EditorTools
             label.raycastTarget = false;
         }
 
+        // ------------------------------------------------------------
+        //  バックログ
+        // ------------------------------------------------------------
+
+        private static void BuildLogPanel(
+            Transform parent,
+            out GameObject panel,
+            out ScrollRect scrollRect,
+            out TextMeshProUGUI logText,
+            out Button closeButton)
+        {
+            panel = NewUI("LogPanel", parent);
+            StretchFull(panel);
+            Image bg = panel.AddComponent<Image>();
+            bg.color = OverlayColor;
+
+            CreatePanelHeading(panel.transform, "ログ");
+
+            // --- ScrollRect ---
+            GameObject scrollGo = NewUI("ScrollView", panel.transform);
+            var scrollRt = (RectTransform)scrollGo.transform;
+            scrollRt.anchorMin = Vector2.zero;
+            scrollRt.anchorMax = Vector2.one;
+            scrollRt.offsetMin = new Vector2(140f, 140f);
+            scrollRt.offsetMax = new Vector2(-140f, -150f);
+
+            scrollRect = scrollGo.AddComponent<ScrollRect>();
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.scrollSensitivity = 45f;
+
+            GameObject viewportGo = NewUI("Viewport", scrollGo.transform);
+            StretchFull(viewportGo);
+            viewportGo.AddComponent<RectMask2D>();
+            var viewportRt = (RectTransform)viewportGo.transform;
+
+            GameObject contentGo = NewUI("Content", viewportGo.transform);
+            var contentRt = (RectTransform)contentGo.transform;
+            contentRt.anchorMin = new Vector2(0f, 1f);
+            contentRt.anchorMax = new Vector2(1f, 1f);
+            contentRt.pivot = new Vector2(0.5f, 1f);
+            contentRt.offsetMin = new Vector2(0f, 0f);
+            contentRt.offsetMax = new Vector2(0f, 0f);
+
+            logText = AddText(contentGo, string.Empty, 28f, TextAlignmentOptions.TopLeft);
+            logText.lineSpacing = 6f;
+
+            // テキストの高さに合わせて Content が伸びることで、スクロール範囲が決まる。
+            var contentFitter = contentGo.AddComponent<ContentSizeFitter>();
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scrollRect.viewport = viewportRt;
+            scrollRect.content = contentRt;
+
+            closeButton = CreateLabeledButton(
+                panel.transform, "LogCloseButton", "閉じる", new Vector2(0f, 0f), new Vector2(360f, 76f));
+            var closeRt = (RectTransform)closeButton.transform;
+            closeRt.anchorMin = new Vector2(0.5f, 0f);
+            closeRt.anchorMax = new Vector2(0.5f, 0f);
+            closeRt.pivot = new Vector2(0.5f, 0f);
+            closeRt.anchoredPosition = new Vector2(0f, 40f);
+        }
+
+        // ------------------------------------------------------------
+        //  セーブ / ロード
+        // ------------------------------------------------------------
+
+        private static void BuildSlotPanel(
+            Transform parent,
+            out GameObject panel,
+            out TextMeshProUGUI heading,
+            out Button[] slotButtons,
+            out TextMeshProUGUI[] slotLabels,
+            out Button closeButton)
+        {
+            panel = NewUI("SlotPanel", parent);
+            StretchFull(panel);
+            Image bg = panel.AddComponent<Image>();
+            bg.color = OverlayColor;
+
+            heading = CreatePanelHeading(panel.transform, "セーブ");
+
+            slotButtons = new Button[SaveSystem.SlotCount];
+            slotLabels = new TextMeshProUGUI[SaveSystem.SlotCount];
+
+            const float slotHeight = 130f;
+            const float spacing = 26f;
+            float totalHeight = SaveSystem.SlotCount * slotHeight + (SaveSystem.SlotCount - 1) * spacing;
+            float top = totalHeight * 0.5f - slotHeight * 0.5f;
+
+            for (int i = 0; i < SaveSystem.SlotCount; i++)
+            {
+                float y = top - i * (slotHeight + spacing);
+                Button button = CreateLabeledButton(
+                    panel.transform,
+                    $"Slot{i}",
+                    string.Empty,
+                    new Vector2(0f, y + 40f),
+                    new Vector2(1000f, slotHeight));
+
+                slotButtons[i] = button;
+                slotLabels[i] = button.GetComponentInChildren<TextMeshProUGUI>();
+                slotLabels[i].fontSize = 30f;
+            }
+
+            closeButton = CreateLabeledButton(
+                panel.transform, "SlotCloseButton", "閉じる", new Vector2(0f, 0f), new Vector2(360f, 76f));
+            var closeRt = (RectTransform)closeButton.transform;
+            closeRt.anchorMin = new Vector2(0.5f, 0f);
+            closeRt.anchorMax = new Vector2(0.5f, 0f);
+            closeRt.pivot = new Vector2(0.5f, 0f);
+            closeRt.anchoredPosition = new Vector2(0f, 40f);
+        }
+
+        // ------------------------------------------------------------
+        //  確認ダイアログ
+        // ------------------------------------------------------------
+
+        private static void BuildConfirmPanel(
+            Transform parent,
+            out GameObject panel,
+            out TextMeshProUGUI label,
+            out Button yesButton,
+            out Button noButton)
+        {
+            panel = NewUI("ConfirmPanel", parent);
+            StretchFull(panel);
+            Image dim = panel.AddComponent<Image>();
+            dim.color = new Color(0f, 0f, 0f, 0.7f);
+
+            GameObject box = NewUI("Box", panel.transform);
+            var boxRt = (RectTransform)box.transform;
+            boxRt.anchorMin = new Vector2(0.5f, 0.5f);
+            boxRt.anchorMax = new Vector2(0.5f, 0.5f);
+            boxRt.pivot = new Vector2(0.5f, 0.5f);
+            boxRt.anchoredPosition = Vector2.zero;
+            boxRt.sizeDelta = new Vector2(920f, 400f);
+            Image boxBg = box.AddComponent<Image>();
+            boxBg.color = new Color(0.08f, 0.09f, 0.13f, 1f);
+
+            GameObject labelGo = NewUI("ConfirmLabel", box.transform);
+            var labelRt = (RectTransform)labelGo.transform;
+            labelRt.anchorMin = new Vector2(0f, 1f);
+            labelRt.anchorMax = new Vector2(1f, 1f);
+            labelRt.pivot = new Vector2(0.5f, 1f);
+            labelRt.anchoredPosition = new Vector2(0f, -56f);
+            labelRt.sizeDelta = new Vector2(-80f, 180f);
+            label = AddText(labelGo, string.Empty, 32f, TextAlignmentOptions.Center);
+
+            yesButton = CreateLabeledButton(
+                box.transform, "ConfirmYes", "はい", new Vector2(-190f, -120f), new Vector2(320f, 84f));
+            noButton = CreateLabeledButton(
+                box.transform, "ConfirmNo", "いいえ", new Vector2(190f, -120f), new Vector2(320f, 84f));
+        }
+
+        // ------------------------------------------------------------
+        //  タイトル / リザルト
+        // ------------------------------------------------------------
+
         private static void BuildTitlePanel(
             Transform parent,
             out GameObject titlePanel,
             out TextMeshProUGUI endingListLabel,
             out Button startButton,
+            out Button loadButton,
             out Button clearRecordButton)
         {
             titlePanel = NewUI("TitlePanel", parent);
@@ -317,7 +661,7 @@ namespace ThreeMonthsOfSpring.EditorTools
             titleRt.anchorMin = new Vector2(0.5f, 1f);
             titleRt.anchorMax = new Vector2(0.5f, 1f);
             titleRt.pivot = new Vector2(0.5f, 1f);
-            titleRt.anchoredPosition = new Vector2(0f, -140f);
+            titleRt.anchoredPosition = new Vector2(0f, -120f);
             titleRt.sizeDelta = new Vector2(1200f, 130f);
             TextMeshProUGUI title = AddText(titleGo, "三か月の春", 88f, TextAlignmentOptions.Center);
             title.color = AccentColor;
@@ -327,7 +671,7 @@ namespace ThreeMonthsOfSpring.EditorTools
             subtitleRt.anchorMin = new Vector2(0.5f, 1f);
             subtitleRt.anchorMax = new Vector2(0.5f, 1f);
             subtitleRt.pivot = new Vector2(0.5f, 1f);
-            subtitleRt.anchoredPosition = new Vector2(0f, -272f);
+            subtitleRt.anchoredPosition = new Vector2(0f, -252f);
             subtitleRt.sizeDelta = new Vector2(1200f, 50f);
             TextMeshProUGUI subtitle =
                 AddText(subtitleGo, "Three Months of Spring", 28f, TextAlignmentOptions.Center);
@@ -338,15 +682,26 @@ namespace ThreeMonthsOfSpring.EditorTools
             listRt.anchorMin = new Vector2(0.5f, 0.5f);
             listRt.anchorMax = new Vector2(0.5f, 0.5f);
             listRt.pivot = new Vector2(0.5f, 0.5f);
-            listRt.anchoredPosition = new Vector2(0f, -30f);
-            listRt.sizeDelta = new Vector2(900f, 330f);
+            listRt.anchoredPosition = new Vector2(0f, -10f);
+            listRt.sizeDelta = new Vector2(900f, 320f);
             endingListLabel = AddText(listGo, string.Empty, 28f, TextAlignmentOptions.Top);
             endingListLabel.color = new Color(1f, 1f, 1f, 0.85f);
 
             startButton = CreateLabeledButton(
-                titlePanel.transform, "StartButton", "はじめから", new Vector2(0f, 170f), new Vector2(420f, 92f));
+                titlePanel.transform, "StartButton", "はじめから", new Vector2(0f, 190f), new Vector2(420f, 92f));
+            loadButton = CreateLabeledButton(
+                titlePanel.transform, "TitleLoadButton", "つづきから", new Vector2(0f, 86f), new Vector2(420f, 92f));
             clearRecordButton = CreateLabeledButton(
-                titlePanel.transform, "ClearRecordButton", "エンディング記録を消す", new Vector2(0f, 64f), new Vector2(420f, 64f));
+                titlePanel.transform, "ClearRecordButton", "エンディング記録を消す", new Vector2(0f, -8f), new Vector2(420f, 64f));
+
+            // ボタン群はリストの下に並べる。アンカー基準を画面下側に変えておく。
+            foreach (Button button in new[] { startButton, loadButton, clearRecordButton })
+            {
+                var rt = (RectTransform)button.transform;
+                rt.anchorMin = new Vector2(0.5f, 0f);
+                rt.anchorMax = new Vector2(0.5f, 0f);
+                rt.pivot = new Vector2(0.5f, 0f);
+            }
         }
 
         private static void BuildResultPanel(
@@ -378,6 +733,21 @@ namespace ThreeMonthsOfSpring.EditorTools
         //  ヘルパ
         // ------------------------------------------------------------
 
+        private static TextMeshProUGUI CreatePanelHeading(Transform parent, string caption)
+        {
+            GameObject go = NewUI("Heading", parent);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = new Vector2(0.5f, 1f);
+            rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.anchoredPosition = new Vector2(0f, -50f);
+            rt.sizeDelta = new Vector2(1000f, 70f);
+
+            TextMeshProUGUI text = AddText(go, caption, 46f, TextAlignmentOptions.Center);
+            text.color = AccentColor;
+            return text;
+        }
+
         private static Button CreateLabeledButton(
             Transform parent, string name, string caption, Vector2 anchoredPosition, Vector2 size)
         {
@@ -396,7 +766,11 @@ namespace ThreeMonthsOfSpring.EditorTools
             button.targetGraphic = image;
 
             GameObject labelGo = NewUI("Label", go.transform);
-            StretchFull(labelGo);
+            var labelRt = (RectTransform)labelGo.transform;
+            labelRt.anchorMin = Vector2.zero;
+            labelRt.anchorMax = Vector2.one;
+            labelRt.offsetMin = new Vector2(24f, 8f);
+            labelRt.offsetMax = new Vector2(-24f, -8f);
             TextMeshProUGUI label = AddText(labelGo, caption, 30f, TextAlignmentOptions.Center);
             label.raycastTarget = false;
 

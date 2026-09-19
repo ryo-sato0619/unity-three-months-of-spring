@@ -22,6 +22,7 @@ VAR tsutaeta = false
 === chapter1 ===
 # chapter: 第一章　神田、三か月の始まり
 # bg: street_morning
+# bgm: quiet
 
 神田の雑居ビル。午前八時半。
 
@@ -181,6 +182,7 @@ IT企業とは違う空気。どこか時間が止まっているような感覚
 === chapter2 ===
 # chapter: 第二章　日常と、気持ちの変化
 # bg: office_day
+# bgm: warm
 
 翌週から、羽田春香とのやりとりが日常になった。
 
@@ -447,6 +449,7 @@ IT企業とは違う空気。どこか時間が止まっているような感覚
 
 === chapter3_deeper ===
 # bg: office_evening
+# bgm: tension
 
 そして、その翌週。
 
@@ -555,6 +558,7 @@ IT企業とは違う空気。どこか時間が止まっているような感覚
 === chapter4 ===
 # chapter: 第四章　決断と、不信と、それでも
 # bg: office_day
+# bgm: thinking
 
 三か月目に入った、ある日の午後。
 
@@ -627,6 +631,7 @@ AIの台頭、会社からの冷遇、そしてかつての同僚からの異業
 === chapter5 ===
 # chapter: 第五章　花形部署
 # bg: meeting_room
+# bgm: thinking
 
 延長の返事をしてから、二週間後。
 
@@ -749,6 +754,7 @@ AIの台頭、会社からの冷遇、そしてかつての同僚からの異業
 # chapter: TRUE END ／ 三か月の春
 # bg: park_noon
 # ending: true_spring
+# bgm: ending
 
 新しい部署での初日。
 
@@ -806,6 +812,7 @@ AIの台頭、会社からの冷遇、そしてかつての同僚からの異業
 # chapter: NORMAL END ／ それぞれの春
 # bg: office_day
 # ending: normal_each
+# bgm: ending
 
 新しい部署での初日。
 
@@ -851,6 +858,7 @@ AIの台頭、会社からの冷遇、そしてかつての同僚からの異業
 # chapter: NORMAL END ／ 春は過ぎて
 # bg: street_evening
 # ending: normal_passed
+# bgm: ending
 
 最終日。
 
@@ -904,6 +912,7 @@ AIの台頭、会社からの冷遇、そしてかつての同僚からの異業
 # chapter: BAD END ／ 評価されないまま
 # bg: street_night
 # ending: bad_unseen
+# bgm: quiet
 
 最終日。
 
@@ -953,6 +962,7 @@ AIの台頭、会社からの冷遇、そしてかつての同僚からの異業
 # chapter: BAD END ／ 越えた一線
 # bg: street_night
 # ending: bad_line
+# bgm: quiet
 
 契約打ち切りから、一か月。
 
