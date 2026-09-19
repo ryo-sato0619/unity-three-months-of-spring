@@ -112,6 +112,9 @@ docs/
 | 背景 | `Assets/Resources/Backgrounds/<キー>.jpg` | `BackgroundPalette.cs` の色グラデーションで代用 |
 | BGM | `Assets/Resources/Bgm/<キー>.ogg` | 無音（ゲームは動く） |
 
+素材の出典とライセンスは [CREDITS.md](CREDITS.md) を参照。
+再配布が明示的に許諾されているもの（Unsplash License / CC BY 4.0）だけを選んでいます。
+
 ファイル名を `#bg` / `#bgm` タグの値に合わせて置くだけで自動的に使われます。
 背景写真は縦横比を保ったまま画面を覆うように配置されます（`NovelGameController.FitBackground`）。
 
@@ -154,5 +157,9 @@ docs/
 
 ## サードパーティ
 
+素材とソフトウェアの出典・ライセンスは [CREDITS.md](CREDITS.md) にまとめています。
+
+- 音楽: Kevin MacLeod (incompetech.com) — CC BY 4.0
+- 背景写真: Unsplash — Unsplash License
 - [ink / ink-unity-integration](https://github.com/inkle/ink-unity-integration) — MIT License, inkle Ltd.
 - TextMeshPro — Unity Companion License（Unity 同梱）

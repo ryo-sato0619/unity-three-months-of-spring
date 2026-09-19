@@ -81,15 +81,24 @@ namespace ThreeMonthsOfSpring.EditorTools
                 out TextMeshProUGUI endingListLabel,
                 out Button startButton,
                 out Button titleLoadButton,
+                out Button titleCreditsButton,
                 out Button clearRecordButton);
 
-            // ログとスロットはタイトルより手前。タイトル画面からロードを開けるようにするため。
-            BuildLogPanel(
-                canvas.transform,
+            // ログ・クレジット・スロットはタイトルより手前。
+            // タイトル画面からロードとクレジットを開けるようにするため。
+            BuildScrollPanel(
+                canvas.transform, "Log", "ログ", TextAlignmentOptions.TopLeft,
                 out GameObject logPanel,
                 out ScrollRect logScrollRect,
                 out TextMeshProUGUI logText,
                 out Button logCloseButton);
+
+            BuildScrollPanel(
+                canvas.transform, "Credits", "クレジット", TextAlignmentOptions.Top,
+                out GameObject creditsPanel,
+                out ScrollRect creditsScrollRect,
+                out TextMeshProUGUI creditsLabel,
+                out Button creditsCloseButton);
 
             BuildSlotPanel(
                 canvas.transform,
@@ -132,6 +141,12 @@ namespace ThreeMonthsOfSpring.EditorTools
             Assign(so, "logScrollRect", logScrollRect);
             Assign(so, "logText", logText);
             Assign(so, "logCloseButton", logCloseButton);
+
+            Assign(so, "creditsPanel", creditsPanel);
+            Assign(so, "creditsScrollRect", creditsScrollRect);
+            Assign(so, "creditsLabel", creditsLabel);
+            Assign(so, "creditsCloseButton", creditsCloseButton);
+            Assign(so, "titleCreditsButton", titleCreditsButton);
 
             Assign(so, "slotPanel", slotPanel);
             Assign(so, "slotPanelTitle", slotPanelTitle);
@@ -487,21 +502,27 @@ namespace ThreeMonthsOfSpring.EditorTools
         //  バックログ
         // ------------------------------------------------------------
 
-        private static void BuildLogPanel(
+        /// <summary>
+        /// 見出し + スクロール可能なテキスト + 閉じるボタン、という構成のパネル。
+        /// ログ画面とクレジット画面で共用する。
+        /// </summary>
+        private static void BuildScrollPanel(
             Transform parent,
+            string name,
+            string heading,
+            TextAlignmentOptions alignment,
             out GameObject panel,
             out ScrollRect scrollRect,
-            out TextMeshProUGUI logText,
+            out TextMeshProUGUI bodyText,
             out Button closeButton)
         {
-            panel = NewUI("LogPanel", parent);
+            panel = NewUI(name, parent);
             StretchFull(panel);
             Image bg = panel.AddComponent<Image>();
             bg.color = OverlayColor;
 
-            CreatePanelHeading(panel.transform, "ログ");
+            CreatePanelHeading(panel.transform, heading);
 
-            // --- ScrollRect ---
             GameObject scrollGo = NewUI("ScrollView", panel.transform);
             var scrollRt = (RectTransform)scrollGo.transform;
             scrollRt.anchorMin = Vector2.zero;
@@ -528,8 +549,8 @@ namespace ThreeMonthsOfSpring.EditorTools
             contentRt.offsetMin = new Vector2(0f, 0f);
             contentRt.offsetMax = new Vector2(0f, 0f);
 
-            logText = AddText(contentGo, string.Empty, 28f, TextAlignmentOptions.TopLeft);
-            logText.lineSpacing = 6f;
+            bodyText = AddText(contentGo, string.Empty, 28f, alignment);
+            bodyText.lineSpacing = 6f;
 
             // テキストの高さに合わせて Content が伸びることで、スクロール範囲が決まる。
             var contentFitter = contentGo.AddComponent<ContentSizeFitter>();
@@ -539,7 +560,7 @@ namespace ThreeMonthsOfSpring.EditorTools
             scrollRect.content = contentRt;
 
             closeButton = CreateLabeledButton(
-                panel.transform, "LogCloseButton", "閉じる", new Vector2(0f, 0f), new Vector2(360f, 76f));
+                panel.transform, name + "CloseButton", "閉じる", new Vector2(0f, 0f), new Vector2(360f, 76f));
             var closeRt = (RectTransform)closeButton.transform;
             closeRt.anchorMin = new Vector2(0.5f, 0f);
             closeRt.anchorMax = new Vector2(0.5f, 0f);
@@ -649,6 +670,7 @@ namespace ThreeMonthsOfSpring.EditorTools
             out TextMeshProUGUI endingListLabel,
             out Button startButton,
             out Button loadButton,
+            out Button creditsButton,
             out Button clearRecordButton)
         {
             titlePanel = NewUI("TitlePanel", parent);
@@ -682,20 +704,22 @@ namespace ThreeMonthsOfSpring.EditorTools
             listRt.anchorMin = new Vector2(0.5f, 0.5f);
             listRt.anchorMax = new Vector2(0.5f, 0.5f);
             listRt.pivot = new Vector2(0.5f, 0.5f);
-            listRt.anchoredPosition = new Vector2(0f, -10f);
-            listRt.sizeDelta = new Vector2(900f, 320f);
+            listRt.anchoredPosition = new Vector2(0f, 30f);
+            listRt.sizeDelta = new Vector2(900f, 280f);
             endingListLabel = AddText(listGo, string.Empty, 28f, TextAlignmentOptions.Top);
             endingListLabel.color = new Color(1f, 1f, 1f, 0.85f);
 
             startButton = CreateLabeledButton(
-                titlePanel.transform, "StartButton", "はじめから", new Vector2(0f, 190f), new Vector2(420f, 92f));
+                titlePanel.transform, "StartButton", "はじめから", new Vector2(0f, 360f), new Vector2(420f, 92f));
             loadButton = CreateLabeledButton(
-                titlePanel.transform, "TitleLoadButton", "つづきから", new Vector2(0f, 86f), new Vector2(420f, 92f));
+                titlePanel.transform, "TitleLoadButton", "つづきから", new Vector2(0f, 252f), new Vector2(420f, 92f));
+            creditsButton = CreateLabeledButton(
+                titlePanel.transform, "TitleCreditsButton", "クレジット", new Vector2(0f, 162f), new Vector2(420f, 64f));
             clearRecordButton = CreateLabeledButton(
-                titlePanel.transform, "ClearRecordButton", "エンディング記録を消す", new Vector2(0f, -8f), new Vector2(420f, 64f));
+                titlePanel.transform, "ClearRecordButton", "エンディング記録を消す", new Vector2(0f, 84f), new Vector2(420f, 64f));
 
             // ボタン群はリストの下に並べる。アンカー基準を画面下側に変えておく。
-            foreach (Button button in new[] { startButton, loadButton, clearRecordButton })
+            foreach (Button button in new[] { startButton, loadButton, creditsButton, clearRecordButton })
             {
                 var rt = (RectTransform)button.transform;
                 rt.anchorMin = new Vector2(0.5f, 0f);

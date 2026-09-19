@@ -25,6 +25,8 @@ namespace ThreeMonthsOfSpring.EditorTools
         {
             public readonly Dictionary<string, int> EndingCounts = new Dictionary<string, int>();
             public readonly List<string> PathsWithoutEnding = new List<string>();
+            public readonly HashSet<string> BackgroundKeys = new HashSet<string>();
+            public readonly HashSet<string> BgmKeys = new HashSet<string>();
             public int TotalPaths;
             public int MaxDepth;
         }
@@ -109,6 +111,32 @@ namespace ThreeMonthsOfSpring.EditorTools
                 ok = false;
             }
 
+            // --- 素材の対応づけ ---
+            // タイトル画面でしか鳴らない "title" は ink のタグに出てこないので明示的に足す。
+            report.BgmKeys.Add("title");
+
+            sb.AppendLine();
+            sb.AppendLine("--- 背景 (Resources/Backgrounds) ---");
+            foreach (string key in new SortedSet<string>(report.BackgroundKeys))
+            {
+                bool hasImage = Resources.Load<Texture2D>("Backgrounds/" + key) != null;
+                bool hasGradient = BackgroundPalette.IsKnown(key);
+                string state = hasImage ? "画像" : hasGradient ? "グラデーション代用" : "定義なし";
+                sb.AppendLine($"  {(hasImage || hasGradient ? "OK  " : "欠落")}  {key,-18} {state}");
+                if (!hasImage && !hasGradient)
+                {
+                    ok = false;
+                }
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("--- BGM (Resources/Bgm) ---");
+            foreach (string key in new SortedSet<string>(report.BgmKeys))
+            {
+                bool hasClip = Resources.Load<AudioClip>("Bgm/" + key) != null;
+                sb.AppendLine($"  {(hasClip ? "OK  " : "未配置")}  {key,-18} {(hasClip ? "読み込み可" : "無音になります")}");
+            }
+
             if (ok)
             {
                 Debug.Log(sb.ToString() + "\n検証に成功しました。");
@@ -134,6 +162,14 @@ namespace ThreeMonthsOfSpring.EditorTools
                     if (tag.StartsWith(EndingTagPrefix))
                     {
                         ending = tag.Substring(EndingTagPrefix.Length).Trim();
+                    }
+                    else if (tag.StartsWith("bg:"))
+                    {
+                        report.BackgroundKeys.Add(tag.Substring(3).Trim());
+                    }
+                    else if (tag.StartsWith("bgm:"))
+                    {
+                        report.BgmKeys.Add(tag.Substring(4).Trim());
                     }
                 }
             }

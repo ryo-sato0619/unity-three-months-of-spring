@@ -32,6 +32,27 @@ namespace ThreeMonthsOfSpring
         private const string EndingPrefsPrefix = "tms.ending.";
 
         /// <summary>
+        /// ゲーム内クレジット。BGM は CC BY 4.0 なので、作品そのものに表示する義務がある。
+        /// リポジトリ側の表記は CREDITS.md。
+        /// </summary>
+        private const string CreditsText =
+            "<align=center><color=#E0A96D>音楽</color></align>\n\n" +
+            "\"Bittersweet\", \"Disquiet\", \"Morning\",\n" +
+            "\"Stay the Course\", \"Immersed\", \"Inspired\"\n" +
+            "Kevin MacLeod (incompetech.com)\n" +
+            "Licensed under Creative Commons: By Attribution 4.0 License\n" +
+            "http://creativecommons.org/licenses/by/4.0/\n\n\n" +
+            "<align=center><color=#E0A96D>背景写真</color></align>\n\n" +
+            "Unsplash (unsplash.com) / Unsplash License\n\n" +
+            "Mylène Larnaud ／ Petr ／ kate.sade ／ JC Gellidon ／\n" +
+            "Ryunosuke Kikuno ／ Pema G. Lama ／ Benjamin Child ／\n" +
+            "Jelena Kostic ／ Weichao Deng ／ Lutz Stallknecht\n\n\n" +
+            "<align=center><color=#E0A96D>ソフトウェア</color></align>\n\n" +
+            "ink / ink-unity-integration — inkle Ltd. (MIT License)\n" +
+            "TextMeshPro — Unity Technologies\n\n\n" +
+            "<align=center><color=#6B7280>登場する人物・企業・団体はすべて架空です。</color></align>";
+
+        /// <summary>
         /// バックログの上限。TMP は1つのテキストで扱える文字数に上限があるため、
         /// 際限なく貯めると表示が欠ける。古いものから捨てる。
         /// </summary>
@@ -66,6 +87,13 @@ namespace ThreeMonthsOfSpring
         [SerializeField] private ScrollRect logScrollRect;
         [SerializeField] private TMP_Text logText;
         [SerializeField] private Button logCloseButton;
+
+        [Header("UI - クレジット")]
+        [SerializeField] private GameObject creditsPanel;
+        [SerializeField] private ScrollRect creditsScrollRect;
+        [SerializeField] private TMP_Text creditsLabel;
+        [SerializeField] private Button creditsCloseButton;
+        [SerializeField] private Button titleCreditsButton;
 
         [Header("UI - セーブ / ロード")]
         [SerializeField] private GameObject slotPanel;
@@ -143,6 +171,8 @@ namespace ThreeMonthsOfSpring
             barTitleButton.onClick.AddListener(RequestReturnToTitle);
 
             logCloseButton.onClick.AddListener(() => logPanel.SetActive(false));
+            titleCreditsButton.onClick.AddListener(OpenCredits);
+            creditsCloseButton.onClick.AddListener(() => creditsPanel.SetActive(false));
             slotCloseButton.onClick.AddListener(() => slotPanel.SetActive(false));
 
             for (int i = 0; i < slotButtons.Length; i++)
@@ -187,7 +217,17 @@ namespace ThreeMonthsOfSpring
                 || resultPanel.activeSelf
                 || logPanel.activeSelf
                 || slotPanel.activeSelf
-                || confirmPanel.activeSelf;
+                || confirmPanel.activeSelf
+                || creditsPanel.activeSelf;
+        }
+
+        private void OpenCredits()
+        {
+            creditsLabel.text = CreditsText;
+            creditsPanel.SetActive(true);
+
+            Canvas.ForceUpdateCanvases();
+            creditsScrollRect.verticalNormalizedPosition = 1f;
         }
 
         // ------------------------------------------------------------
@@ -205,6 +245,7 @@ namespace ThreeMonthsOfSpring
             logPanel.SetActive(false);
             slotPanel.SetActive(false);
             confirmPanel.SetActive(false);
+            creditsPanel.SetActive(false);
             controlBar.SetActive(false);
             choiceRoot.gameObject.SetActive(false);
             continueIndicator.SetActive(false);
