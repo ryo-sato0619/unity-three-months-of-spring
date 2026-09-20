@@ -42,6 +42,8 @@ namespace ThreeMonthsOfSpring
             "Kevin MacLeod (incompetech.com)\n" +
             "Licensed under Creative Commons: By Attribution 4.0 License\n" +
             "http://creativecommons.org/licenses/by/4.0/\n\n\n" +
+            "<align=center><color=#E0A96D>立ち絵</color></align>\n\n" +
+            "羽田春香の立ち絵は画像生成AIで生成したものです。\n\n\n" +
             "<align=center><color=#E0A96D>背景写真</color></align>\n\n" +
             "Unsplash (unsplash.com) / Unsplash License\n\n" +
             "Mylène Larnaud ／ Petr ／ kate.sade ／ JC Gellidon ／\n" +

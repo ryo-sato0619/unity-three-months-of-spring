@@ -62,20 +62,23 @@ http://creativecommons.org/licenses/by/4.0/
 
 ## 立ち絵
 
-**未配置です。** 表示する仕組みだけが実装されています。
-用意の仕方は [docs/character-sprites.md](docs/character-sprites.md) を参照してください。
+羽田春香の立ち絵 6 点は、**画像生成 AI によって生成**したものです。
 
-素材を追加したら、この節とゲーム内クレジット
-（`NovelGameController.CreditsText`）の両方に追記してください。
+| ファイル | 表情 |
+|---|---|
+| `haruka_smile.png` | 柔らかい笑顔 |
+| `haruka_normal.png` | 真顔 |
+| `haruka_laugh.png` | 笑い |
+| `haruka_troubled.png` | 困り顔 |
+| `haruka_sad.png` | 寂しげ |
+| `haruka_surprise.png` | 驚き |
 
-生成 AI を使った場合の記載例:
+生成後、`tools/Remove-CheckerBackground.ps1` で背景を除去し、
+透過 PNG に変換しています。それ以外の改変はしていません。
 
-```
-立ち絵
-
-羽田春香の立ち絵は画像生成AI（<サービス名>）で生成したものです。
-生成物の利用条件は <サービス名> の利用規約に従います。
-```
+> **補足**: 日本の著作権法では、人間の創作的寄与が乏しい AI 生成物には
+> 著作権が発生しないと解されています。利用条件は生成に使用した
+> サービスの利用規約に従います。
 
 ---
 
