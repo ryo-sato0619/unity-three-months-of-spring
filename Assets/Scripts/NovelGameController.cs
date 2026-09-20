@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using Ink.Runtime;
 using Ink.UnityIntegration;
@@ -112,12 +113,18 @@ namespace ThreeMonthsOfSpring
         [SerializeField] private Button confirmYesButton;
         [SerializeField] private Button confirmNoButton;
 
+        [Header("UI - エンディング一覧")]
+        [SerializeField] private GameObject endingsPanel;
+        [SerializeField] private ScrollRect endingsScrollRect;
+        [SerializeField] private TMP_Text endingListLabel;
+        [SerializeField] private Button endingsCloseButton;
+        [SerializeField] private Button clearRecordButton;
+        [SerializeField] private Button titleEndingsButton;
+
         [Header("UI - タイトル / リザルト")]
         [SerializeField] private GameObject titlePanel;
-        [SerializeField] private TMP_Text endingListLabel;
         [SerializeField] private Button startButton;
         [SerializeField] private Button titleLoadButton;
-        [SerializeField] private Button clearRecordButton;
         [SerializeField] private GameObject resultPanel;
         [SerializeField] private TMP_Text resultLabel;
         [SerializeField] private Button backToTitleButton;
@@ -155,6 +162,15 @@ namespace ThreeMonthsOfSpring
 
         private void Awake()
         {
+            // シーンとスクリプトが噛み合っていないと、この先で NullReferenceException が
+            // 連鎖して原因が分からなくなる。先に確認して、直し方を示して止める。
+            if (!ValidateReferences())
+            {
+                // 以降の処理はすべて参照に依存するので、ここで止める。
+                enabled = false;
+                return;
+            }
+
             // フォントアセットは OS のフォントから実行時に生成するため、
             // シーンに焼き込まれていない。ここで全ラベルにまとめて適用する。
             foreach (TMP_Text label in GetComponentsInChildren<TMP_Text>(true))
@@ -162,6 +178,7 @@ namespace ThreeMonthsOfSpring
                 JapaneseFontProvider.Apply(label);
             }
 
+            ApplyTitleScrim();
             choiceTemplate.gameObject.SetActive(false);
 
             startButton.onClick.AddListener(BeginStory);
@@ -179,6 +196,8 @@ namespace ThreeMonthsOfSpring
             logCloseButton.onClick.AddListener(() => logPanel.SetActive(false));
             titleCreditsButton.onClick.AddListener(OpenCredits);
             creditsCloseButton.onClick.AddListener(() => creditsPanel.SetActive(false));
+            titleEndingsButton.onClick.AddListener(OpenEndings);
+            endingsCloseButton.onClick.AddListener(() => endingsPanel.SetActive(false));
             slotCloseButton.onClick.AddListener(() => slotPanel.SetActive(false));
 
             for (int i = 0; i < slotButtons.Length; i++)
@@ -197,6 +216,86 @@ namespace ThreeMonthsOfSpring
 
             RefreshBgmLabel();
             ShowTitle();
+        }
+
+        /// <summary>
+        /// タイトル画面の暗幕を、一様な色から上下だけ濃いグラデーションに差し替える。
+        /// テクスチャを実行時に作るので、シーンには色の指定だけが入っている。
+        /// </summary>
+        private void ApplyTitleScrim()
+        {
+            var scrim = titlePanel.GetComponent<Image>();
+            if (scrim == null)
+            {
+                return;
+            }
+
+            Texture2D texture = BackgroundPalette.CreateTitleScrim();
+            scrim.sprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                100f);
+            scrim.color = Color.white;
+        }
+
+        /// <summary>
+        /// Inspector で割り当てられるべき参照がすべて埋まっているか確認する。
+        ///
+        /// シーンは SceneBuilder が生成するので、スクリプトに項目を足したあと
+        /// シーンを作り直し忘れると未割り当てのまま実行されてしまう。
+        /// その場合に何が足りないのかと、どう直すのかを一度にログへ出す。
+        /// </summary>
+        private bool ValidateReferences()
+        {
+            var missing = new List<string>();
+
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+            foreach (FieldInfo field in GetType().GetFields(flags))
+            {
+                if (field.GetCustomAttribute<SerializeField>() == null)
+                {
+                    continue;
+                }
+
+                if (typeof(UnityEngine.Object).IsAssignableFrom(field.FieldType))
+                {
+                    if (field.GetValue(this) as UnityEngine.Object == null)
+                    {
+                        missing.Add(field.Name);
+                    }
+                }
+                else if (field.FieldType.IsArray &&
+                         typeof(UnityEngine.Object).IsAssignableFrom(field.FieldType.GetElementType()))
+                {
+                    var array = field.GetValue(this) as Array;
+                    if (array == null || array.Length == 0)
+                    {
+                        missing.Add(field.Name);
+                        continue;
+                    }
+
+                    foreach (object element in array)
+                    {
+                        if (element as UnityEngine.Object == null)
+                        {
+                            missing.Add(field.Name);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (missing.Count == 0)
+            {
+                return true;
+            }
+
+            Debug.LogError(
+                "シーンの参照が設定されていません: " + string.Join(", ", missing) + "\n" +
+                "スクリプトを変更したあとシーンを作り直していない可能性があります。\n" +
+                "再生を停止して [Tools > 三か月の春 > 2. シーンを生成する] を実行してください。");
+            return false;
         }
 
         private void Update()
@@ -224,7 +323,17 @@ namespace ThreeMonthsOfSpring
                 || logPanel.activeSelf
                 || slotPanel.activeSelf
                 || confirmPanel.activeSelf
-                || creditsPanel.activeSelf;
+                || creditsPanel.activeSelf
+                || endingsPanel.activeSelf;
+        }
+
+        private void OpenEndings()
+        {
+            RefreshEndingList();
+            endingsPanel.SetActive(true);
+
+            Canvas.ForceUpdateCanvases();
+            endingsScrollRect.verticalNormalizedPosition = 1f;
         }
 
         private void OpenCredits()
@@ -252,6 +361,7 @@ namespace ThreeMonthsOfSpring
             slotPanel.SetActive(false);
             confirmPanel.SetActive(false);
             creditsPanel.SetActive(false);
+            endingsPanel.SetActive(false);
             controlBar.SetActive(false);
             choiceRoot.gameObject.SetActive(false);
             continueIndicator.SetActive(false);
@@ -267,7 +377,6 @@ namespace ThreeMonthsOfSpring
 
             SetBackground("street_morning");
             audioDirector.Play("title");
-            RefreshEndingList();
         }
 
         private void RefreshEndingList()

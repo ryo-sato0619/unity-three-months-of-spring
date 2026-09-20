@@ -79,11 +79,10 @@ namespace ThreeMonthsOfSpring.EditorTools
             BuildTitlePanel(
                 canvas.transform,
                 out GameObject titlePanel,
-                out TextMeshProUGUI endingListLabel,
                 out Button startButton,
                 out Button titleLoadButton,
-                out Button titleCreditsButton,
-                out Button clearRecordButton);
+                out Button titleEndingsButton,
+                out Button titleCreditsButton);
 
             // ログ・クレジット・スロットはタイトルより手前。
             // タイトル画面からロードとクレジットを開けるようにするため。
@@ -100,6 +99,29 @@ namespace ThreeMonthsOfSpring.EditorTools
                 out ScrollRect creditsScrollRect,
                 out TextMeshProUGUI creditsLabel,
                 out Button creditsCloseButton);
+
+            BuildScrollPanel(
+                canvas.transform, "Endings", "エンディング", TextAlignmentOptions.Top,
+                out GameObject endingsPanel,
+                out ScrollRect endingsScrollRect,
+                out TextMeshProUGUI endingListLabel,
+                out Button endingsCloseButton);
+
+            // 「記録を消す」はタイトルではなくエンディング一覧の中に置く。
+            // 一覧を見ながら操作する機能なので、その場にあるほうが自然で、
+            // タイトルから誤って押す余地も減る。
+            Button clearRecordButton = CreateLabeledButton(
+                endingsPanel.transform, "ClearRecordButton", "記録を消す",
+                new Vector2(0f, 0f), new Vector2(360f, 76f));
+            var clearRt = (RectTransform)clearRecordButton.transform;
+            clearRt.anchorMin = new Vector2(0.5f, 0f);
+            clearRt.anchorMax = new Vector2(0.5f, 0f);
+            clearRt.pivot = new Vector2(0.5f, 0f);
+            clearRt.anchoredPosition = new Vector2(-200f, 40f);
+
+            // 閉じるボタンと並ぶので、既定の中央から右にずらす。
+            var endingsCloseRt = (RectTransform)endingsCloseButton.transform;
+            endingsCloseRt.anchoredPosition = new Vector2(200f, 40f);
 
             BuildSlotPanel(
                 canvas.transform,
@@ -161,11 +183,16 @@ namespace ThreeMonthsOfSpring.EditorTools
             Assign(so, "confirmYesButton", confirmYesButton);
             Assign(so, "confirmNoButton", confirmNoButton);
 
-            Assign(so, "titlePanel", titlePanel);
+            Assign(so, "endingsPanel", endingsPanel);
+            Assign(so, "endingsScrollRect", endingsScrollRect);
             Assign(so, "endingListLabel", endingListLabel);
+            Assign(so, "endingsCloseButton", endingsCloseButton);
+            Assign(so, "clearRecordButton", clearRecordButton);
+            Assign(so, "titleEndingsButton", titleEndingsButton);
+
+            Assign(so, "titlePanel", titlePanel);
             Assign(so, "startButton", startButton);
             Assign(so, "titleLoadButton", titleLoadButton);
-            Assign(so, "clearRecordButton", clearRecordButton);
             Assign(so, "resultPanel", resultPanel);
             Assign(so, "resultLabel", resultLabel);
             Assign(so, "backToTitleButton", backToTitleButton);
@@ -696,16 +723,18 @@ namespace ThreeMonthsOfSpring.EditorTools
         private static void BuildTitlePanel(
             Transform parent,
             out GameObject titlePanel,
-            out TextMeshProUGUI endingListLabel,
             out Button startButton,
             out Button loadButton,
-            out Button creditsButton,
-            out Button clearRecordButton)
+            out Button endingsButton,
+            out Button creditsButton)
         {
             titlePanel = NewUI("TitlePanel", parent);
             StretchFull(titlePanel);
+
+            // 背景画像を見せたいので、タイトル画面は薄い暗幕だけにする。
+            // 文字とボタンの可読性を保てる範囲で、できるだけ透かす。
             Image bg = titlePanel.AddComponent<Image>();
-            bg.color = new Color(0.03f, 0.04f, 0.07f, 0.94f);
+            bg.color = new Color(0.03f, 0.04f, 0.07f, 0.42f);
 
             GameObject titleGo = NewUI("Title", titlePanel.transform);
             var titleRt = (RectTransform)titleGo.transform;
@@ -728,27 +757,17 @@ namespace ThreeMonthsOfSpring.EditorTools
                 AddText(subtitleGo, "Three Months of Spring", 28f, TextAlignmentOptions.Center);
             subtitle.color = new Color(1f, 1f, 1f, 0.5f);
 
-            GameObject listGo = NewUI("EndingList", titlePanel.transform);
-            var listRt = (RectTransform)listGo.transform;
-            listRt.anchorMin = new Vector2(0.5f, 0.5f);
-            listRt.anchorMax = new Vector2(0.5f, 0.5f);
-            listRt.pivot = new Vector2(0.5f, 0.5f);
-            listRt.anchoredPosition = new Vector2(0f, 30f);
-            listRt.sizeDelta = new Vector2(900f, 280f);
-            endingListLabel = AddText(listGo, string.Empty, 28f, TextAlignmentOptions.Top);
-            endingListLabel.color = new Color(1f, 1f, 1f, 0.85f);
-
             startButton = CreateLabeledButton(
-                titlePanel.transform, "StartButton", "はじめから", new Vector2(0f, 360f), new Vector2(420f, 92f));
+                titlePanel.transform, "StartButton", "はじめから", new Vector2(0f, 380f), new Vector2(420f, 92f));
             loadButton = CreateLabeledButton(
-                titlePanel.transform, "TitleLoadButton", "つづきから", new Vector2(0f, 252f), new Vector2(420f, 92f));
+                titlePanel.transform, "TitleLoadButton", "つづきから", new Vector2(0f, 272f), new Vector2(420f, 92f));
+            endingsButton = CreateLabeledButton(
+                titlePanel.transform, "TitleEndingsButton", "エンディング", new Vector2(0f, 172f), new Vector2(420f, 76f));
             creditsButton = CreateLabeledButton(
-                titlePanel.transform, "TitleCreditsButton", "クレジット", new Vector2(0f, 162f), new Vector2(420f, 64f));
-            clearRecordButton = CreateLabeledButton(
-                titlePanel.transform, "ClearRecordButton", "エンディング記録を消す", new Vector2(0f, 84f), new Vector2(420f, 64f));
+                titlePanel.transform, "TitleCreditsButton", "クレジット", new Vector2(0f, 80f), new Vector2(420f, 76f));
 
-            // ボタン群はリストの下に並べる。アンカー基準を画面下側に変えておく。
-            foreach (Button button in new[] { startButton, loadButton, creditsButton, clearRecordButton })
+            // ボタン群は画面下側を基準に並べる。
+            foreach (Button button in new[] { startButton, loadButton, endingsButton, creditsButton })
             {
                 var rt = (RectTransform)button.transform;
                 rt.anchorMin = new Vector2(0.5f, 0f);

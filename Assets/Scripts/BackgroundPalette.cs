@@ -80,6 +80,44 @@ namespace ThreeMonthsOfSpring
             return texture;
         }
 
+        /// <summary>
+        /// タイトル画面に重ねる暗幕。上端と下端を濃く、中央を薄くする。
+        ///
+        /// 一様な暗幕だと、背景写真を見せようと薄くした分だけ
+        /// タイトル文字とボタンが読みにくくなる。文字が乗る上下だけを沈めれば、
+        /// 写真の見せ場である中央を残したまま可読性を確保できる。
+        /// </summary>
+        public static Texture2D CreateTitleScrim()
+        {
+            const int height = 128;
+            var texture = new Texture2D(1, height, TextureFormat.RGBA32, false)
+            {
+                name = "title_scrim",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+                hideFlags = HideFlags.HideAndDontSave,
+            };
+
+            var tint = new Color(0.02f, 0.03f, 0.06f, 1f);
+
+            for (int y = 0; y < height; y++)
+            {
+                // t は 0 が画面下端、1 が上端。
+                float t = y / (float)(height - 1);
+
+                // 上端 0.80（タイトル文字）、中央 0.20（写真を見せる）、下端 0.62（ボタン）。
+                float alpha = t >= 0.5f
+                    ? Mathf.Lerp(0.20f, 0.80f, Mathf.SmoothStep(0f, 1f, (t - 0.5f) / 0.5f))
+                    : Mathf.Lerp(0.62f, 0.20f, Mathf.SmoothStep(0f, 1f, t / 0.5f));
+
+                tint.a = alpha;
+                texture.SetPixel(0, y, tint);
+            }
+
+            texture.Apply();
+            return texture;
+        }
+
         /// <summary>タグ名が既知かどうか。未知のタグはログで気付けるようにする。</summary>
         public static bool IsKnown(string key)
         {
