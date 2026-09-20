@@ -26,16 +26,68 @@
 
 | 項目 | 指定 |
 |---|---|
-| 形式 | PNG（**背景は透過**） |
-| 推奨サイズ | 縦 1400〜2000px 程度。横は成り行き |
-| 構図 | 膝上〜腰上のバストアップ。**足元が画像の下端に来るように** |
+| 形式 | **PNG**（WebP は Unity が読めません） |
+| 背景 | **本物の透過**（アルファチャンネル） |
+| 推奨サイズ | 縦 1500〜2000px 程度。横は成り行き |
+| 構図 | **全身**（頭から足先まで）。直立、正面かやや斜め |
 | 表情差分 | **同じポーズ・同じ位置・同じサイズで、顔だけ差し替える** |
 
 最後の項目が重要です。ポーズや拡大率が表情ごとに違うと、表情が変わるたびに
 立ち絵が跳ねて見えます。同一の元画像から顔だけ描き換えるのが確実です。
 
+全身で用意するのは、ゲーム側が「足元を画面の下に逃がして腰から上を見せる」
+配置にしているためです。足先まで入っていれば、あとは表示側で調整できます。
+
 インポート設定（Sprite 化、ピボットを下端中央に設定）は
 `Assets/Scripts/Editor/TextureImportRules.cs` が自動で適用します。手作業は不要です。
+
+### 表情が足りないうちは代用されます
+
+`haruka_smile.png` だけを置いた状態でも、他の表情は同じキャラクターの
+手持ちの絵で自動的に代用されます（`CharacterSpriteProvider.FindSubstitute`）。
+表情を 1 枚ずつ足していく途中でも、立ち絵が消えたり現れたりしません。
+
+検証ツールでは、実ファイルがあるものは `OK`、代用されているものは `代用` と表示されます。
+
+---
+
+## 透過背景の落とし穴
+
+画像生成 AI に「透過背景で」と指示すると、**透過を表す市松模様（チェッカーボード）を
+絵として描いてしまう**ことがよくあります。見た目は透過そのものですが、
+アルファチャンネルは無く、灰色と白の格子が普通のピクセルとして入っています。
+そのまま使うとゲーム画面に格子が出ます。
+
+確認方法は、画像編集ソフトで開いて背景が「透明」と表示されるか見るのが確実です。
+ファイル形式が JPEG や、アルファ無しの PNG / WebP なら、その時点で透過ではありません。
+
+### 対処
+
+リポジトリに除去ツールを入れてあります。
+
+```powershell
+cd tools
+.\Remove-CheckerBackground.ps1 `
+    -InputPath ..\raw\haruka_laugh.webp `
+    -OutputPath ..\Assets\Resources\Sprites\haruka_laugh.png `
+    -MaxLightness 255
+```
+
+画像の四辺から塗りつぶしを行い、「彩度が低く明るい」領域を背景として除去します。
+キャラクターの白いシャツや靴は線画の輪郭に囲まれていて四辺と繋がらないため、
+塗りつぶしが到達せずに残ります。あわせて余白の切り詰めと、輪郭に残る縁の除去も行います。
+WebP の入力は ffmpeg があれば自動で PNG に変換されます。
+
+うまくいかない場合のつまみ:
+
+| パラメータ | 既定 | 調整 |
+|---|---|---|
+| `-MaxLightness` | 252 | 白い背景が残るなら `255` |
+| `-SaturationTolerance` | 22 | 格子が残るなら上げる。髪や肌が欠けるなら下げる |
+| `-Erode` | 2 | 輪郭が痩せるなら `0` か `1` |
+
+**そもそも回避するなら、透過ではなく「単色べた塗りの背景」で生成させるのが確実です。**
+`solid chroma green background` のように指定すれば、除去がずっと簡単で正確になります。
 
 ## キャラクター設定（原案より）
 
@@ -90,13 +142,19 @@ Steam をはじめ AI 利用の開示を求める配布プラットフォーム�
 「同じキャラクター・同じポーズで表情だけ変更」という指示で派生させます。
 
 ```
-anime style visual novel character sprite, full body from the knees up,
+anime style visual novel character sprite, full body from head to feet,
 Japanese woman in her late twenties, short black hair, boyish and tidy,
 tall for a woman, narrow eyes with a soft friendly expression,
-office casual clothing (blouse and cardigan), autumn,
-standing straight facing slightly to the left,
-transparent background, clean line art, soft lighting, single character only
+office casual clothing, autumn,
+standing straight facing the viewer, arms relaxed at her sides,
+solid flat chroma green background, clean line art, soft lighting,
+single character only, no text, no watermark
 ```
+
+背景を `transparent` ではなく `solid flat chroma green` にしているのは、
+上記の「市松模様が描き込まれる」問題を避けるためです。
+生成後に `Remove-CheckerBackground.ps1` で緑を除去します
+（`-SaturationTolerance` を上げ、`-MinLightness` を下げる必要があります）。
 
 表情の指定を差し替えて使います。
 

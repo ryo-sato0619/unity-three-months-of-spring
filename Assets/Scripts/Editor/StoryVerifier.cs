@@ -142,8 +142,18 @@ namespace ThreeMonthsOfSpring.EditorTools
             sb.AppendLine("--- 立ち絵 (Resources/Sprites) ---");
             foreach (string key in new SortedSet<string>(report.SpriteKeys))
             {
-                bool exists = CharacterSpriteProvider.Exists(key);
-                sb.AppendLine($"  {(exists ? "OK  " : "未配置")}  {key,-20} {(exists ? "読み込み可" : "非表示になります")}");
+                if (CharacterSpriteProvider.ExistsExactly(key))
+                {
+                    sb.AppendLine($"  OK    {key,-20} 読み込み可");
+                }
+                else if (CharacterSpriteProvider.Exists(key))
+                {
+                    sb.AppendLine($"  代用  {key,-20} 同じキャラの別表情で代用されます");
+                }
+                else
+                {
+                    sb.AppendLine($"  未配置  {key,-20} 非表示になります");
+                }
             }
 
             if (ok)

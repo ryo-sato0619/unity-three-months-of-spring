@@ -18,6 +18,11 @@ namespace ThreeMonthsOfSpring
 
         private static readonly Dictionary<string, Sprite> Cache = new Dictionary<string, Sprite>();
 
+        private static Sprite[] allSprites;
+
+        private static Sprite[] AllSprites =>
+            allSprites ??= Resources.LoadAll<Sprite>(ResourceFolder.TrimEnd('/'));
+
         /// <summary>立ち絵を隠すことを表すキー。</summary>
         public static bool IsHideKey(string key)
         {
@@ -54,6 +59,13 @@ namespace ThreeMonthsOfSpring
                 }
             }
 
+            // 目的の表情が無ければ、同じキャラクターの別の表情で代用する。
+            // 表情を1枚ずつ足していく途中でも、立ち絵が消えたり現れたりしないようにするため。
+            if (sprite == null)
+            {
+                sprite = FindSubstitute(key);
+            }
+
             if (sprite != null)
             {
                 Cache[key] = sprite;
@@ -62,7 +74,39 @@ namespace ThreeMonthsOfSpring
             return sprite;
         }
 
-        /// <summary>そのキーの立ち絵が存在するか。</summary>
+        /// <summary>
+        /// "haruka_troubled" が無いときに "haruka_smile" などで代用する。
+        /// キーの "_" より前をキャラクター名とみなす。
+        /// </summary>
+        private static Sprite FindSubstitute(string key)
+        {
+            int separator = key.IndexOf('_');
+            string character = separator > 0 ? key.Substring(0, separator) : key;
+
+            foreach (Sprite candidate in AllSprites)
+            {
+                if (candidate != null && candidate.name.StartsWith(character))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>そのキーの立ち絵が、代用ではなく実ファイルとして存在するか。</summary>
+        public static bool ExistsExactly(string key)
+        {
+            if (IsHideKey(key))
+            {
+                return false;
+            }
+
+            return Resources.Load<Sprite>(ResourceFolder + key) != null
+                || Resources.Load<Texture2D>(ResourceFolder + key) != null;
+        }
+
+        /// <summary>そのキーで何かしら表示できるか（代用を含む）。</summary>
         public static bool Exists(string key)
         {
             return !IsHideKey(key) && Get(key) != null;

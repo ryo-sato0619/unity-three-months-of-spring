@@ -330,12 +330,14 @@ namespace ThreeMonthsOfSpring.EditorTools
             GameObject go = NewUI("CharacterSprite", parent);
             var rt = (RectTransform)go.transform;
 
-            // 画面のやや右寄り、下端基準。
-            rt.anchorMin = new Vector2(0.72f, 0f);
-            rt.anchorMax = new Vector2(0.72f, 0f);
+            // 画面のやや右寄り。全身の立ち絵を前提に、足元が画面外に出る位置に置く。
+            // こうすると画面に映るのは概ね腰から上になり、顔が十分な大きさで見える。
+            // 下半身はメッセージウィンドウに隠れる。
+            rt.anchorMin = new Vector2(0.74f, 0f);
+            rt.anchorMax = new Vector2(0.74f, 0f);
             rt.pivot = new Vector2(0.5f, 0f);
-            rt.anchoredPosition = new Vector2(0f, 150f);
-            rt.sizeDelta = new Vector2(820f, 1000f);
+            rt.anchoredPosition = new Vector2(0f, -280f);
+            rt.sizeDelta = new Vector2(700f, 1320f);
 
             Image image = go.AddComponent<Image>();
             image.raycastTarget = false;
