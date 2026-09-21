@@ -225,7 +225,8 @@ WebGL 固有の対応:
 Copyright (c) 2026 砂糖
 
 **同梱している第三者の素材は、それぞれ元のライセンスのままです。**
-MIT はそれらには及びません。内訳は [LICENSE](LICENSE) と [CREDITS.md](CREDITS.md) を参照してください。
+MIT はそれらには及びません。適用範囲の内訳は [NOTICE.md](NOTICE.md)、
+出典と撮影者・曲名などは [CREDITS.md](CREDITS.md) を参照してください。
 
 ---
 
