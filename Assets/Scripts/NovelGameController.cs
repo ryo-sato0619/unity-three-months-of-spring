@@ -37,6 +37,8 @@ namespace ThreeMonthsOfSpring
         /// リポジトリ側の表記は CREDITS.md。
         /// </summary>
         private const string CreditsText =
+            "<align=center><color=#E0A96D>制作</color></align>\n\n" +
+            "<align=center>原作・脚本・実装　　砂糖</align>\n\n\n" +
             "<align=center><color=#E0A96D>音楽</color></align>\n\n" +
             "\"Bittersweet\", \"Disquiet\", \"Morning\",\n" +
             "\"Stay the Course\", \"Immersed\", \"Inspired\"\n" +
@@ -54,8 +56,20 @@ namespace ThreeMonthsOfSpring
             "Noto Sans JP — Google / Noto CJK\n" +
             "Licensed under the SIL Open Font License 1.1\n\n\n" +
             "<align=center><color=#E0A96D>ソフトウェア</color></align>\n\n" +
-            "ink / ink-unity-integration — inkle Ltd. (MIT License)\n" +
+            "ink / ink-unity-integration — inkle Ltd.\n" +
+            "The MIT License (MIT)  Copyright (c) 2016 inkle Ltd.\n" +
+            "Permission is hereby granted, free of charge, to any person obtaining\n" +
+            "a copy of this software and associated documentation files (the\n" +
+            "\"Software\"), to deal in the Software without restriction, including\n" +
+            "without limitation the rights to use, copy, modify, merge, publish,\n" +
+            "distribute, sublicense, and/or sell copies of the Software, and to\n" +
+            "permit persons to whom the Software is furnished to do so, subject to\n" +
+            "the following conditions: The above copyright notice and this\n" +
+            "permission notice shall be included in all copies or substantial\n" +
+            "portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT\n" +
+            "WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.\n\n" +
             "TextMeshPro — Unity Technologies\n\n\n" +
+            "<align=center><color=#6B7280>本作のシナリオおよびスクリプトは MIT License の下で公開しています。</color></align>\n" +
             "<align=center><color=#6B7280>登場する人物・企業・団体はすべて架空です。</color></align>";
 
         /// <summary>

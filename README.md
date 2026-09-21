@@ -218,6 +218,17 @@ WebGL 固有の対応:
 
 ---
 
+## ライセンス
+
+このリポジトリで新規に作成した部分（スクリプト、ツール、ドキュメント、
+シナリオ `ThreeMonthsOfSpring.ink`）は **[MIT License](LICENSE)** です。
+Copyright (c) 2026 砂糖
+
+**同梱している第三者の素材は、それぞれ元のライセンスのままです。**
+MIT はそれらには及びません。内訳は [LICENSE](LICENSE) と [CREDITS.md](CREDITS.md) を参照してください。
+
+---
+
 ## サードパーティ
 
 素材とソフトウェアの出典・ライセンスは [CREDITS.md](CREDITS.md) にまとめています。

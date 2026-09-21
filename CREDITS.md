@@ -1,6 +1,15 @@
 # クレジット
 
-このゲームで使用している素材の出典とライセンスです。
+## 制作
+
+**原作・脚本・実装 — 砂糖**
+
+シナリオ、スクリプト、ツール類はこのリポジトリで新規に作成したもので、
+[MIT License](LICENSE) の下で公開しています。
+
+---
+
+以下は、同梱している第三者の素材の出典とライセンスです。
 
 いずれも **再配布が明示的に許諾されているもの**だけを選んでいます。
 再配布禁止の規約を持つ素材（日本の多くのフリー素材サイトなど）は、
@@ -88,6 +97,34 @@ http://creativecommons.org/licenses/by/4.0/
 |---|---|
 | [ink / ink-unity-integration](https://github.com/inkle/ink-unity-integration) — inkle Ltd. | MIT License |
 | TextMeshPro — Unity Technologies | Unity Companion License |
+
+ink はパッケージとして参照しているだけで、**コードは一切改変していません**
+（`Packages/manifest.json` でコミット `73cc147` に固定）。
+
+MIT ライセンスは著作権表示と許諾文を複製物に含めることを求めています。
+ink のランタイムはビルドに同梱されるため、全文を以下に記載します。
+
+```
+The MIT License (MIT)
+Copyright (c) 2016 inkle Ltd.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
 
 ---
 
