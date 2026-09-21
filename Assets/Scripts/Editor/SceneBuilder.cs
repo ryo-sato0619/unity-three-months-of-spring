@@ -46,7 +46,8 @@ namespace ThreeMonthsOfSpring.EditorTools
             AudioDirector audio = CreateAudio(canvas.transform);
 
             // --- 描画順 = ヒエラルキー順。後に作ったものほど手前に来る。 ---
-            CreateBackground(canvas.transform, out RectTransform backgroundArea, out Image background);
+            CreateBackground(
+                canvas.transform, out RectTransform backgroundArea, out Image background, out Image backgroundNext);
             Button advanceArea = CreateAdvanceArea(canvas.transform);
             Image characterSprite = CreateCharacterSprite(canvas.transform);
             TextMeshProUGUI chapterLabel = CreateChapterLabel(canvas.transform);
@@ -64,6 +65,10 @@ namespace ThreeMonthsOfSpring.EditorTools
                 out Button barLog,
                 out Button barSave,
                 out Button barLoad,
+                out Button barAuto,
+                out TextMeshProUGUI barAutoLabel,
+                out Button barSkip,
+                out TextMeshProUGUI barSkipLabel,
                 out Button barBgm,
                 out TextMeshProUGUI barBgmLabel,
                 out Button barTitle);
@@ -143,6 +148,7 @@ namespace ThreeMonthsOfSpring.EditorTools
             Assign(so, "inkFile", LoadInkFile());
             Assign(so, "backgroundArea", backgroundArea);
             Assign(so, "background", background);
+            Assign(so, "backgroundNext", backgroundNext);
             Assign(so, "characterSprite", characterSprite);
             Assign(so, "chapterLabel", chapterLabel);
             Assign(so, "speakerPanel", speakerPanel);
@@ -157,6 +163,10 @@ namespace ThreeMonthsOfSpring.EditorTools
             Assign(so, "barLogButton", barLog);
             Assign(so, "barSaveButton", barSave);
             Assign(so, "barLoadButton", barLoad);
+            Assign(so, "barAutoButton", barAuto);
+            Assign(so, "barAutoLabel", barAutoLabel);
+            Assign(so, "barSkipButton", barSkip);
+            Assign(so, "barSkipLabel", barSkipLabel);
             Assign(so, "barBgmButton", barBgm);
             Assign(so, "barBgmLabel", barBgmLabel);
             Assign(so, "barTitleButton", barTitle);
@@ -313,7 +323,8 @@ namespace ThreeMonthsOfSpring.EditorTools
         //  各パーツ
         // ------------------------------------------------------------
 
-        private static void CreateBackground(Transform parent, out RectTransform area, out Image image)
+        private static void CreateBackground(
+            Transform parent, out RectTransform area, out Image image, out Image next)
         {
             // 画面からはみ出した分を隠すための外枠。写真を縦横比を保ったまま敷き詰めるのに使う。
             GameObject areaGo = NewUI("BackgroundArea", parent);
@@ -332,6 +343,21 @@ namespace ThreeMonthsOfSpring.EditorTools
             image = go.AddComponent<Image>();
             image.color = new Color(0.12f, 0.14f, 0.18f, 1f);
             image.raycastTarget = false;
+
+            // 切り替え先を重ねるための2枚目。普段は非表示で、
+            // 場面が変わるときだけ不透明にしていって前の背景と入れ替える。
+            GameObject nextGo = NewUI("BackgroundNext", areaGo.transform);
+            var nextRt = (RectTransform)nextGo.transform;
+            nextRt.anchorMin = new Vector2(0.5f, 0.5f);
+            nextRt.anchorMax = new Vector2(0.5f, 0.5f);
+            nextRt.pivot = new Vector2(0.5f, 0.5f);
+            nextRt.anchoredPosition = Vector2.zero;
+            nextRt.sizeDelta = new Vector2(1920f, 1080f);
+
+            next = nextGo.AddComponent<Image>();
+            next.color = Color.white;
+            next.raycastTarget = false;
+            nextGo.SetActive(false);
         }
 
         private static Button CreateAdvanceArea(Transform parent)
@@ -454,6 +480,10 @@ namespace ThreeMonthsOfSpring.EditorTools
             out Button logButton,
             out Button saveButton,
             out Button loadButton,
+            out Button autoButton,
+            out TextMeshProUGUI autoLabel,
+            out Button skipButton,
+            out TextMeshProUGUI skipLabel,
             out Button bgmButton,
             out TextMeshProUGUI bgmLabel,
             out Button titleButton)
@@ -478,6 +508,8 @@ namespace ThreeMonthsOfSpring.EditorTools
             var fitter = bar.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
 
+            autoButton = CreateBarButton(bar.transform, "BarAuto", "オート", 150f, out autoLabel);
+            skipButton = CreateBarButton(bar.transform, "BarSkip", "スキップ", 170f, out skipLabel);
             logButton = CreateBarButton(bar.transform, "BarLog", "ログ", 120f, out _);
             saveButton = CreateBarButton(bar.transform, "BarSave", "セーブ", 140f, out _);
             loadButton = CreateBarButton(bar.transform, "BarLoad", "ロード", 140f, out _);

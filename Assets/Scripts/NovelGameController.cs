@@ -67,6 +67,7 @@ namespace ThreeMonthsOfSpring
         [Header("UI - 本編")]
         [SerializeField] private RectTransform backgroundArea;
         [SerializeField] private Image background;
+        [SerializeField] private Image backgroundNext;
         [SerializeField] private Image characterSprite;
         [SerializeField] private float spriteFadeSeconds = 0.25f;
         [SerializeField] private TMP_Text chapterLabel;
@@ -83,6 +84,10 @@ namespace ThreeMonthsOfSpring
         [SerializeField] private Button barLogButton;
         [SerializeField] private Button barSaveButton;
         [SerializeField] private Button barLoadButton;
+        [SerializeField] private Button barAutoButton;
+        [SerializeField] private TMP_Text barAutoLabel;
+        [SerializeField] private Button barSkipButton;
+        [SerializeField] private TMP_Text barSkipLabel;
         [SerializeField] private Button barBgmButton;
         [SerializeField] private TMP_Text barBgmLabel;
         [SerializeField] private Button barTitleButton;
@@ -135,6 +140,17 @@ namespace ThreeMonthsOfSpring
         [Header("演出")]
         [SerializeField] private float charactersPerSecond = 45f;
 
+        /// <summary>背景を切り替えるときのクロスフェード時間。</summary>
+        [SerializeField] private float backgroundFadeSeconds = 0.45f;
+
+        [Header("オート再生")]
+        /// <summary>1行あたりの待ち時間 = base + 文字数 × perChar。</summary>
+        [SerializeField] private float autoBaseSeconds = 1.1f;
+        [SerializeField] private float autoPerCharacterSeconds = 0.055f;
+
+        [Header("既読スキップ")]
+        [SerializeField] private float skipIntervalSeconds = 0.035f;
+
         private Story story;
         private Coroutine typingRoutine;
         private bool isTyping;
@@ -151,6 +167,15 @@ namespace ThreeMonthsOfSpring
         private string currentBackground = "street_morning";
         private string currentSprite = string.Empty;
         private Coroutine spriteFadeRoutine;
+        private Coroutine backgroundFadeRoutine;
+
+        private bool autoPlay;
+        private bool skipping;
+        private Coroutine autoRoutine;
+        private Coroutine skipRoutine;
+
+        /// <summary>直前に表示した行が、既に読んだことのある行だったか。スキップの停止判定に使う。</summary>
+        private bool lastLineWasRead;
 
         private bool slotPanelIsSaveMode;
         private Vector2Int lastScreenSize;
@@ -190,6 +215,8 @@ namespace ThreeMonthsOfSpring
             barLogButton.onClick.AddListener(OpenLog);
             barSaveButton.onClick.AddListener(() => OpenSlotPanel(true));
             barLoadButton.onClick.AddListener(() => OpenSlotPanel(false));
+            barAutoButton.onClick.AddListener(ToggleAuto);
+            barSkipButton.onClick.AddListener(ToggleSkip);
             barBgmButton.onClick.AddListener(ToggleBgm);
             barTitleButton.onClick.AddListener(RequestReturnToTitle);
 
@@ -215,7 +242,14 @@ namespace ThreeMonthsOfSpring
             });
 
             RefreshBgmLabel();
+            RefreshAutoLabel();
+            RefreshSkipLabel();
             ShowTitle();
+        }
+
+        private void OnApplicationQuit()
+        {
+            ReadHistory.Flush();
         }
 
         /// <summary>
@@ -351,6 +385,9 @@ namespace ThreeMonthsOfSpring
 
         private void ShowTitle()
         {
+            StopAutoAndSkip();
+            ReadHistory.Flush();
+
             story = null;
             backlog.Clear();
             reachedEndingId = null;
@@ -403,16 +440,20 @@ namespace ThreeMonthsOfSpring
 
         private void RequestClearEndingRecord()
         {
-            OpenConfirm("エンディングの到達記録をすべて消します。\nよろしいですか？", () =>
-            {
-                foreach ((string id, string _) in AllEndings)
+            OpenConfirm(
+                "エンディングの到達記録と既読記録をすべて消します。\n" +
+                "既読を消すと、スキップは最初から効かなくなります。",
+                () =>
                 {
-                    PlayerPrefs.DeleteKey(EndingPrefsPrefix + id);
-                }
+                    foreach ((string id, string _) in AllEndings)
+                    {
+                        PlayerPrefs.DeleteKey(EndingPrefsPrefix + id);
+                    }
 
-                PlayerPrefs.Save();
-                RefreshEndingList();
-            });
+                    PlayerPrefs.Save();
+                    ReadHistory.Clear();
+                    RefreshEndingList();
+                });
         }
 
         private void RecordEnding(string endingId)
@@ -480,7 +521,21 @@ namespace ThreeMonthsOfSpring
 
                 currentText = line;
                 AppendLog(LogEntry.KindLine, currentSpeaker, line);
-                StartTyping(line);
+
+                lastLineWasRead = ReadHistory.IsRead(line);
+                ReadHistory.Mark(line);
+
+                if (skipping)
+                {
+                    // スキップ中は文字送りをしない。
+                    ShowLineInstantly(line);
+                    continueIndicator.SetActive(true);
+                }
+                else
+                {
+                    StartTyping(line);
+                }
+
                 return;
             }
 
@@ -571,10 +626,69 @@ namespace ThreeMonthsOfSpring
                 Debug.LogWarning($"未定義の背景タグです: '{key}'。BackgroundPalette か Resources/Backgrounds に追加してください。");
             }
 
+            Sprite sprite = BackgroundProvider.Get(key);
+            bool first = background.sprite == null;
+            bool changed = currentBackground != key;
             currentBackground = key;
-            background.sprite = BackgroundProvider.Get(key);
+
+            // 初回とスキップ中は即時。それ以外は前の背景から溶け込ませる。
+            if (first || skipping || !changed || backgroundFadeSeconds <= 0f)
+            {
+                ApplyBackgroundInstantly(sprite);
+                return;
+            }
+
+            if (backgroundFadeRoutine != null)
+            {
+                StopCoroutine(backgroundFadeRoutine);
+                backgroundFadeRoutine = null;
+            }
+
+            backgroundFadeRoutine = StartCoroutine(CrossFadeBackground(sprite));
+        }
+
+        private void ApplyBackgroundInstantly(Sprite sprite)
+        {
+            if (backgroundFadeRoutine != null)
+            {
+                StopCoroutine(backgroundFadeRoutine);
+                backgroundFadeRoutine = null;
+            }
+
+            background.sprite = sprite;
             background.color = Color.white;
+            backgroundNext.gameObject.SetActive(false);
             FitBackground();
+        }
+
+        /// <summary>
+        /// 上に重ねたもう1枚を不透明にしていき、終わったら下に焼き付ける。
+        /// 1枚の画像の色を触るだけだと一度暗転してしまうので、2枚でつなぐ。
+        /// </summary>
+        private IEnumerator CrossFadeBackground(Sprite sprite)
+        {
+            backgroundNext.sprite = sprite;
+            backgroundNext.gameObject.SetActive(true);
+            FitBackground();
+
+            var color = Color.white;
+            float elapsed = 0f;
+
+            while (elapsed < backgroundFadeSeconds)
+            {
+                elapsed += Time.deltaTime;
+                color.a = Mathf.Clamp01(elapsed / backgroundFadeSeconds);
+                backgroundNext.color = color;
+                yield return null;
+            }
+
+            background.sprite = sprite;
+            background.color = Color.white;
+            backgroundNext.gameObject.SetActive(false);
+            backgroundNext.color = Color.white;
+            FitBackground();
+
+            backgroundFadeRoutine = null;
         }
 
         /// <summary>
@@ -684,8 +798,19 @@ namespace ThreeMonthsOfSpring
         /// </summary>
         private void FitBackground()
         {
-            Sprite sprite = background.sprite;
-            if (sprite == null || backgroundArea == null)
+            FitToCover(background);
+            FitToCover(backgroundNext);
+        }
+
+        private void FitToCover(Image image)
+        {
+            if (image == null || backgroundArea == null)
+            {
+                return;
+            }
+
+            Sprite sprite = image.sprite;
+            if (sprite == null)
             {
                 return;
             }
@@ -699,11 +824,9 @@ namespace ThreeMonthsOfSpring
             float spriteAspect = sprite.rect.width / sprite.rect.height;
             float areaAspect = area.x / area.y;
 
-            Vector2 size = spriteAspect > areaAspect
+            image.rectTransform.sizeDelta = spriteAspect > areaAspect
                 ? new Vector2(area.y * spriteAspect, area.y)
                 : new Vector2(area.x, area.x / spriteAspect);
-
-            background.rectTransform.sizeDelta = size;
         }
 
         // ------------------------------------------------------------
@@ -787,6 +910,13 @@ namespace ThreeMonthsOfSpring
             if (choiceRoot.gameObject.activeSelf)
             {
                 return;
+            }
+
+            // 手動で送ったらスキップは解除する。押した位置で止まってほしいはずなので。
+            // オートは継続させる（クリックは「今の行を早送り」の意味に留める）。
+            if (skipping)
+            {
+                SetSkip(false);
             }
 
             if (isTyping)
@@ -973,6 +1103,8 @@ namespace ThreeMonthsOfSpring
                 log = new List<LogEntry>(backlog),
             };
 
+            ReadHistory.Flush();
+
             if (SaveSystem.Save(slot, data))
             {
                 slotPanel.SetActive(false);
@@ -1008,6 +1140,8 @@ namespace ThreeMonthsOfSpring
                 story = null;
                 return;
             }
+
+            StopAutoAndSkip();
 
             // ログを引き継ぐ。
             backlog.Clear();
@@ -1082,6 +1216,148 @@ namespace ThreeMonthsOfSpring
             RefreshBgmLabel();
         }
 
+        // ------------------------------------------------------------
+        //  オート再生 / 既読スキップ
+        // ------------------------------------------------------------
+
+        private void ToggleAuto()
+        {
+            SetAuto(!autoPlay);
+        }
+
+        private void SetAuto(bool enable)
+        {
+            autoPlay = enable;
+            RefreshAutoLabel();
+
+            if (autoRoutine != null)
+            {
+                StopCoroutine(autoRoutine);
+                autoRoutine = null;
+            }
+
+            if (autoPlay)
+            {
+                // オートとスキップは同時に動かさない。速いほうが勝つと操作が読めなくなる。
+                SetSkip(false);
+                autoRoutine = StartCoroutine(AutoRoutine());
+            }
+        }
+
+        private void RefreshAutoLabel()
+        {
+            barAutoLabel.text = autoPlay ? "オート ON" : "オート";
+        }
+
+        private IEnumerator AutoRoutine()
+        {
+            while (autoPlay)
+            {
+                if (story == null || IsModalOpen() || choiceRoot.gameObject.activeSelf || isTyping)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                // 行の長さに応じて待つ。短い相槌で長く待たされないように。
+                float wait = autoBaseSeconds + (currentText?.Length ?? 0) * autoPerCharacterSeconds;
+                float elapsed = 0f;
+                while (elapsed < wait)
+                {
+                    if (!autoPlay || IsModalOpen() || choiceRoot.gameObject.activeSelf)
+                    {
+                        break;
+                    }
+
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+
+                if (!autoPlay || IsModalOpen() || choiceRoot.gameObject.activeSelf || isTyping)
+                {
+                    continue;
+                }
+
+                ContinueStory();
+            }
+
+            autoRoutine = null;
+        }
+
+        private void ToggleSkip()
+        {
+            SetSkip(!skipping);
+        }
+
+        private void SetSkip(bool enable)
+        {
+            skipping = enable;
+            RefreshSkipLabel();
+
+            if (skipRoutine != null)
+            {
+                StopCoroutine(skipRoutine);
+                skipRoutine = null;
+            }
+
+            if (skipping)
+            {
+                SetAuto(false);
+                skipRoutine = StartCoroutine(SkipRoutine());
+            }
+        }
+
+        private void RefreshSkipLabel()
+        {
+            barSkipLabel.text = skipping ? "スキップ中" : "スキップ";
+        }
+
+        /// <summary>
+        /// 既読の行だけを送る。未読に当たったら、その行を表示して止まる。
+        ///
+        /// ink は「次の行」を消費せずに覗けないので、1行進めてから既読か判定している。
+        /// 結果として必ず未読の1行目で止まる形になり、これは望ましい挙動でもある。
+        /// </summary>
+        private IEnumerator SkipRoutine()
+        {
+            while (skipping)
+            {
+                if (story == null || IsModalOpen() || choiceRoot.gameObject.activeSelf)
+                {
+                    break;
+                }
+
+                if (!story.canContinue && story.currentChoices.Count == 0)
+                {
+                    break;
+                }
+
+                ContinueStory();
+
+                // 未読に到達した、選択肢が出た、物語が終わった、のいずれかで停止。
+                if (!lastLineWasRead || choiceRoot.gameObject.activeSelf || IsModalOpen())
+                {
+                    break;
+                }
+
+                yield return new WaitForSeconds(skipIntervalSeconds);
+            }
+
+            skipRoutine = null;
+            if (skipping)
+            {
+                skipping = false;
+                RefreshSkipLabel();
+            }
+        }
+
+        /// <summary>タイトルへ戻る、ロードするなど、進行が切り替わるときに両方止める。</summary>
+        private void StopAutoAndSkip()
+        {
+            SetAuto(false);
+            SetSkip(false);
+        }
+
         private void RefreshBgmLabel()
         {
             barBgmLabel.text = audioDirector.Muted ? "BGM OFF" : "BGM ON";
@@ -1093,6 +1369,9 @@ namespace ThreeMonthsOfSpring
 
         private void ShowResult()
         {
+            StopAutoAndSkip();
+            ReadHistory.Flush();
+
             continueIndicator.SetActive(false);
             controlBar.SetActive(false);
             RecordEnding(reachedEndingId);
