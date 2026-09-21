@@ -87,7 +87,20 @@ namespace ThreeMonthsOfSpring.EditorTools
             Directory.CreateDirectory(directory);
 
             // 圧縮を切っておくと、サーバ側の設定に関係なく配信できる。
+            // Brotli / Gzip は Content-Encoding を返せるサーバが要る。
+            // GitHub Pages のような静的ホスティングでも確実に動くほうを選ぶ。
             PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
+
+            PlayerSettings.defaultWebScreenWidth = 1920;
+            PlayerSettings.defaultWebScreenHeight = 1080;
+
+            // 自作テンプレート。Unity 既定のテンプレートはデスクトップで
+            // キャンバスを 1920x1080 に固定するため、小さいウィンドウで見切れる。
+            // またセーブの永続化 (autoSyncPersistentDataPath) も既定では無効。
+            PlayerSettings.WebGL.template = "PROJECT:Responsive";
+
+            // 実行時のエラーをブラウザのコンソールに出す。配布先での切り分け用。
+            PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
 
             Run(new BuildPlayerOptions
             {

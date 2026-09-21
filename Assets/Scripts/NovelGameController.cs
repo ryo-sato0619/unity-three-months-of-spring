@@ -243,6 +243,13 @@ namespace ThreeMonthsOfSpring
 
             SetUpSettingsSliders();
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // ブラウザではアプリを終了させる手段がなく、Application.Quit は何も起きない。
+            // 押しても反応しないボタンを見せるより、隠すほうが親切。
+            titleQuitButton.gameObject.SetActive(false);
+            barQuitButton.gameObject.SetActive(false);
+#endif
+
             logCloseButton.onClick.AddListener(() => logPanel.SetActive(false));
             titleCreditsButton.onClick.AddListener(OpenCredits);
             creditsCloseButton.onClick.AddListener(() => creditsPanel.SetActive(false));

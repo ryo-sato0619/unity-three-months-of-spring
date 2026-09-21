@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <!-- スマートフォンで拡大縮小されると UI の当たり判定がずれるため固定する -->
+  <meta name="viewport"
+        content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+  <title>三か月の春</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b0e16;
+    }
+
+    /*
+      キャンバスをウィンドウいっぱいに広げる。
+      Unity 既定のテンプレートはデスクトップで 1920x1080 固定にするため、
+      それより小さいウィンドウでは画面が見切れる。
+      このゲームの UI は画面比に追従する作りなので、レターボックスを挟まず
+      そのまま埋めたほうが表示領域を活かせる。
+    */
+    #unity-container {
+      position: fixed;
+      inset: 0;
+    }
+
+    #unity-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #0b0e16;
+    }
+
+    #unity-loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #e0a96d;
+      font-family: "Yu Gothic UI", "Hiragino Sans", sans-serif;
+      letter-spacing: 0.2em;
+    }
+
+    #unity-bar {
+      width: min(60vw, 420px);
+      height: 6px;
+      margin-top: 20px;
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    #unity-bar-full {
+      width: 0;
+      height: 100%;
+      background: #e0a96d;
+      transition: width 0.1s linear;
+    }
+
+    #unity-note {
+      margin-top: 14px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.45);
+      letter-spacing: 0;
+    }
+
+    #unity-warning {
+      position: fixed;
+      left: 50%;
+      top: 12px;
+      transform: translateX(-50%);
+      z-index: 10;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="unity-container">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+  </div>
+
+  <div id="unity-loading">
+    <div>三か月の春</div>
+    <div id="unity-bar"><div id="unity-bar-full"></div></div>
+    <div id="unity-note">読み込んでいます。初回は少し時間がかかります。</div>
+  </div>
+
+  <div id="unity-warning"></div>
+
+  <script>
+    var canvas = document.querySelector("#unity-canvas");
+    var loading = document.querySelector("#unity-loading");
+    var barFull = document.querySelector("#unity-bar-full");
+
+    function unityShowBanner(msg, type) {
+      var banner = document.querySelector("#unity-warning");
+      var div = document.createElement("div");
+      div.innerHTML = msg;
+      div.style = type === "error"
+        ? "background:#b03030;color:#fff;padding:10px;"
+        : "background:#c8a020;color:#000;padding:10px;";
+      banner.appendChild(div);
+      if (type !== "error") {
+        setTimeout(function () { banner.removeChild(div); }, 5000);
+      }
+    }
+
+    var buildUrl = "Build";
+    var config = {
+      arguments: [],
+      dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+      frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+      codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+      productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+      productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+      showBanner: unityShowBanner,
+
+      /*
+        Application.persistentDataPath への書き込みをブラウザの保存領域へ
+        自動で同期する。これを有効にしないと、セーブや既読の記録が
+        タブを閉じた時点で消える。Unity の既定は false。
+      */
+      autoSyncPersistentDataPath: true
+    };
+
+    var script = document.createElement("script");
+    script.src = buildUrl + "/{{{ LOADER_FILENAME }}}";
+    script.onload = function () {
+      createUnityInstance(canvas, config, function (progress) {
+        barFull.style.width = (100 * progress) + "%";
+      }).then(function () {
+        loading.style.display = "none";
+      }).catch(function (message) {
+        loading.innerHTML = "<div style='color:#e06060;font-family:sans-serif'>"
+          + "読み込みに失敗しました<br><br>" + message + "</div>";
+      });
+    };
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
