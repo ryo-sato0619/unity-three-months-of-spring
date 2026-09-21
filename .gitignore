@@ -34,6 +34,11 @@
 *.unitypackage
 *.app
 ExportedObj/
+
+# Android (Gradle / CMake) の中間生成物。ビルドのたびに作り直される
+/.utmp/
+/.gradle/
+/.cxx/
 .consulo/
 crashlytics-build.properties
 sysinfo.txt
