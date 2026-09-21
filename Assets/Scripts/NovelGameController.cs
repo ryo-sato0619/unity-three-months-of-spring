@@ -768,6 +768,7 @@ namespace ThreeMonthsOfSpring
 
             characterSprite.sprite = sprite;
             characterSprite.gameObject.SetActive(true);
+            FitCharacterSprite();
 
             if (animate)
             {
@@ -821,10 +822,51 @@ namespace ThreeMonthsOfSpring
         /// 背景を画面いっぱいに「切れてもいいので隙間なく」収める（cover）。
         /// 単純に引き伸ばすと写真の縦横比が崩れるため。
         /// </summary>
+        /// <summary>メッセージウィンドウの上端。下余白 60 + 高さ 330（SceneBuilder と対応）。</summary>
+        private const float MessageWindowTop = 390f;
+
+        /// <summary>立ち絵の頭上に残す余白。</summary>
+        private const float CharacterTopMargin = 24f;
+
+        /// <summary>
+        /// 立ち絵の大きさと縦位置を画面の高さから決める。
+        ///
+        /// 高さを固定にすると、基準（1080）より縦が短い画面で頭が切れる。
+        /// 横長の Android 端末では CanvasScaler の計算上、基準の画面高が
+        /// 1080 より小さくなるため、これが実際に起きる。
+        /// メッセージウィンドウの上端に足を置き、頭が画面内に収まる高さに合わせる。
+        /// </summary>
+        private void FitCharacterSprite()
+        {
+            if (characterSprite == null || backgroundArea == null)
+            {
+                return;
+            }
+
+            float screenHeight = backgroundArea.rect.height;
+            if (screenHeight <= 0f)
+            {
+                return;
+            }
+
+            float height = screenHeight - CharacterTopMargin - MessageWindowTop;
+            if (height <= 0f)
+            {
+                return;
+            }
+
+            RectTransform rt = characterSprite.rectTransform;
+            // 幅は余裕を持たせる。preserveAspect が内側に収めるので、
+            // 高さ基準で決まり、絵の縦横比が変わっても歪まない。
+            rt.sizeDelta = new Vector2(height, height);
+            rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, MessageWindowTop);
+        }
+
         private void FitBackground()
         {
             FitToCover(background);
             FitToCover(backgroundNext);
+            FitCharacterSprite();
         }
 
         private void FitToCover(Image image)

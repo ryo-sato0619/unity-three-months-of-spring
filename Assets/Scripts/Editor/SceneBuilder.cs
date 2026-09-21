@@ -413,14 +413,14 @@ namespace ThreeMonthsOfSpring.EditorTools
             GameObject go = NewUI("CharacterSprite", parent);
             var rt = (RectTransform)go.transform;
 
-            // 画面のやや右寄り。全身の立ち絵を前提に、足元が画面外に出る位置に置く。
-            // こうすると画面に映るのは概ね腰から上になり、顔が十分な大きさで見える。
-            // 下半身はメッセージウィンドウに隠れる。
+            // 画面のやや右寄り。大きさと縦位置は画面の高さから実行時に決めるため
+            // (NovelGameController.FitCharacterSprite)、ここの値は初期値でしかない。
+            // 固定値だと、基準より縦が短い画面 (横長の Android 端末など) で頭が切れる。
             rt.anchorMin = new Vector2(0.74f, 0f);
             rt.anchorMax = new Vector2(0.74f, 0f);
             rt.pivot = new Vector2(0.5f, 0f);
-            rt.anchoredPosition = new Vector2(0f, -280f);
-            rt.sizeDelta = new Vector2(700f, 1320f);
+            rt.anchoredPosition = new Vector2(0f, 390f);
+            rt.sizeDelta = new Vector2(700f, 660f);
 
             Image image = go.AddComponent<Image>();
             image.raycastTarget = false;
@@ -471,26 +471,45 @@ namespace ThreeMonthsOfSpring.EditorTools
             bodyRt.anchorMin = Vector2.zero;
             bodyRt.anchorMax = Vector2.one;
             bodyRt.offsetMin = new Vector2(48f, 40f);
-            bodyRt.offsetMax = new Vector2(-48f, -40f);
+            // 上は話者名の分だけ空ける。
+            bodyRt.offsetMax = new Vector2(-48f, -82f);
             bodyLabel = AddText(body, string.Empty, 38f, TextAlignmentOptions.TopLeft);
             bodyLabel.lineSpacing = 12f;
 
+            // 話者名はウィンドウの内側に置く。外に出すと、すぐ上に並ぶ操作バーと
+            // 高さが競合して重なる。内側なら操作バーの幅が変わっても影響を受けない。
             speakerPanel = NewUI("SpeakerPanel", window.transform);
             var speakerRt = (RectTransform)speakerPanel.transform;
             speakerRt.anchorMin = new Vector2(0f, 1f);
             speakerRt.anchorMax = new Vector2(0f, 1f);
-            speakerRt.pivot = new Vector2(0f, 0f);
-            speakerRt.anchoredPosition = new Vector2(32f, 6f);
-            speakerRt.sizeDelta = new Vector2(420f, 60f);
+            speakerRt.pivot = new Vector2(0f, 1f);
+            speakerRt.anchoredPosition = new Vector2(24f, -12f);
+            speakerRt.sizeDelta = new Vector2(0f, 56f);
 
             Image speakerBg = speakerPanel.AddComponent<Image>();
             speakerBg.color = AccentColor;
             speakerBg.raycastTarget = false;
 
+            // 名前の長さに合わせて幅が伸びるようにする。固定幅だと
+            // 「鈴木 清吾（心の声）」のような長い名前が枠からはみ出す。
+            var speakerLayout = speakerPanel.AddComponent<HorizontalLayoutGroup>();
+            speakerLayout.padding = new RectOffset(22, 22, 0, 0);
+            speakerLayout.childAlignment = TextAnchor.MiddleCenter;
+            speakerLayout.childControlWidth = true;
+            speakerLayout.childControlHeight = true;
+            speakerLayout.childForceExpandWidth = false;
+            speakerLayout.childForceExpandHeight = true;
+
+            var speakerFitter = speakerPanel.AddComponent<ContentSizeFitter>();
+            speakerFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            speakerFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
             GameObject speakerTextGo = NewUI("SpeakerLabel", speakerPanel.transform);
-            StretchFull(speakerTextGo);
-            speakerLabel = AddText(speakerTextGo, string.Empty, 30f, TextAlignmentOptions.Center);
+            speakerLabel = AddText(speakerTextGo, string.Empty, 28f, TextAlignmentOptions.Center);
             speakerLabel.color = new Color(0.08f, 0.07f, 0.06f, 1f);
+            // 折り返すと preferredWidth が縮んで幅が決まらないので、1行固定にする。
+            speakerLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            speakerLabel.raycastTarget = false;
 
             continueIndicator = NewUI("ContinueIndicator", window.transform);
             var indicatorRt = (RectTransform)continueIndicator.transform;
@@ -522,16 +541,18 @@ namespace ThreeMonthsOfSpring.EditorTools
         {
             bar = NewUI("ControlBar", parent);
             var rt = (RectTransform)bar.transform;
-            rt.anchorMin = new Vector2(1f, 0f);
-            rt.anchorMax = new Vector2(1f, 0f);
-            rt.pivot = new Vector2(1f, 0f);
+            // 左寄せにするのは、立ち絵を画面右に置いているため。
+            // 右寄せだと立ち絵の上に重なってしまう。
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(0f, 0f);
+            rt.pivot = new Vector2(0f, 0f);
             // メッセージウィンドウ (高さ330 + 下余白60) のすぐ上。
-            rt.anchoredPosition = new Vector2(-90f, 60f + 330f + 12f);
-            rt.sizeDelta = new Vector2(0f, 56f);
+            rt.anchoredPosition = new Vector2(90f, 60f + 330f + 12f);
+            rt.sizeDelta = new Vector2(0f, 48f);
 
             var layout = bar.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 10f;
-            layout.childAlignment = TextAnchor.MiddleRight;
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = false;
@@ -540,15 +561,15 @@ namespace ThreeMonthsOfSpring.EditorTools
             var fitter = bar.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            autoButton = CreateBarButton(bar.transform, "BarAuto", "オート", 150f, out autoLabel);
-            skipButton = CreateBarButton(bar.transform, "BarSkip", "スキップ", 170f, out skipLabel);
-            logButton = CreateBarButton(bar.transform, "BarLog", "ログ", 120f, out _);
-            saveButton = CreateBarButton(bar.transform, "BarSave", "セーブ", 140f, out _);
-            loadButton = CreateBarButton(bar.transform, "BarLoad", "ロード", 140f, out _);
-            bgmButton = CreateBarButton(bar.transform, "BarBgm", "BGM ON", 160f, out bgmLabel);
-            settingsButton = CreateBarButton(bar.transform, "BarSettings", "設定", 110f, out _);
-            titleButton = CreateBarButton(bar.transform, "BarTitle", "タイトル", 150f, out _);
-            quitButton = CreateBarButton(bar.transform, "BarQuit", "終了", 110f, out _);
+            autoButton = CreateBarButton(bar.transform, "BarAuto", "オート", 116f, out autoLabel);
+            skipButton = CreateBarButton(bar.transform, "BarSkip", "スキップ", 132f, out skipLabel);
+            logButton = CreateBarButton(bar.transform, "BarLog", "ログ", 92f, out _);
+            saveButton = CreateBarButton(bar.transform, "BarSave", "セーブ", 108f, out _);
+            loadButton = CreateBarButton(bar.transform, "BarLoad", "ロード", 108f, out _);
+            bgmButton = CreateBarButton(bar.transform, "BarBgm", "BGM ON", 128f, out bgmLabel);
+            settingsButton = CreateBarButton(bar.transform, "BarSettings", "設定", 88f, out _);
+            titleButton = CreateBarButton(bar.transform, "BarTitle", "タイトル", 116f, out _);
+            quitButton = CreateBarButton(bar.transform, "BarQuit", "終了", 88f, out _);
         }
 
         private static Button CreateBarButton(
@@ -564,11 +585,11 @@ namespace ThreeMonthsOfSpring.EditorTools
 
             var element = go.AddComponent<LayoutElement>();
             element.preferredWidth = width;
-            element.preferredHeight = 56f;
+            element.preferredHeight = 48f;
 
             GameObject labelGo = NewUI("Label", go.transform);
             StretchFull(labelGo);
-            label = AddText(labelGo, caption, 24f, TextAlignmentOptions.Center);
+            label = AddText(labelGo, caption, 21f, TextAlignmentOptions.Center);
             label.raycastTarget = false;
 
             return button;
