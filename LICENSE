@@ -1,0 +1,49 @@
+MIT License
+
+Copyright (c) 2026 砂糖
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## 適用範囲について / Scope
+
+上記 MIT ライセンスが適用されるのは、このリポジトリで新規に作成された部分です。
+具体的には `Assets/Scripts/`、`Assets/WebGLTemplates/`、`tools/`、`docs/` の各ファイルと、
+シナリオ本体 `Assets/Ink/ThreeMonthsOfSpring.ink` を含みます。
+
+The MIT license above applies to the parts originally created for this
+repository, including the scripts, tools, documentation, and the ink scenario.
+
+**同梱している第三者の素材は、それぞれ元のライセンスのままです。**
+MIT ライセンスは、それらの素材には及びません。
+
+Bundled third-party assets remain under their own licenses. The MIT license
+above does not extend to them.
+
+| 素材 | ライセンス |
+|---|---|
+| 背景写真（`Assets/Resources/Backgrounds/`） | Unsplash License |
+| BGM（`Assets/Resources/Bgm/`） | CC BY 4.0 — Kevin MacLeod |
+| フォント（`Assets/Fonts/`） | SIL Open Font License 1.1 |
+| ink / ink-unity-integration | MIT License — inkle Ltd. |
+| TextMesh Pro | Unity Companion License |
+
+詳細と出典は [CREDITS.md](CREDITS.md) を参照してください。
+See CREDITS.md for details and attribution.
