@@ -137,18 +137,28 @@ namespace ThreeMonthsOfSpring
         [Header("音")]
         [SerializeField] private AudioDirector audioDirector;
 
-        [Header("演出")]
-        [SerializeField] private float charactersPerSecond = 45f;
+        [Header("UI - 設定")]
+        [SerializeField] private GameObject settingsPanel;
+        [SerializeField] private Button settingsCloseButton;
+        [SerializeField] private Button settingsResetButton;
+        [SerializeField] private Slider typingSpeedSlider;
+        [SerializeField] private TMP_Text typingSpeedValue;
+        [SerializeField] private Slider autoSpeedSlider;
+        [SerializeField] private TMP_Text autoSpeedValue;
+        [SerializeField] private Slider volumeSlider;
+        [SerializeField] private TMP_Text volumeValue;
+        [SerializeField] private Button titleSettingsButton;
+        [SerializeField] private Button barSettingsButton;
 
+        [Header("UI - 終了")]
+        [SerializeField] private Button titleQuitButton;
+        [SerializeField] private Button barQuitButton;
+
+        [Header("演出")]
         /// <summary>背景を切り替えるときのクロスフェード時間。</summary>
         [SerializeField] private float backgroundFadeSeconds = 0.45f;
 
-        [Header("オート再生")]
-        /// <summary>1行あたりの待ち時間 = base + 文字数 × perChar。</summary>
-        [SerializeField] private float autoBaseSeconds = 1.1f;
-        [SerializeField] private float autoPerCharacterSeconds = 0.055f;
-
-        [Header("既読スキップ")]
+        /// <summary>スキップ時の1行あたりの間隔。設定画面には出さない内部の値。</summary>
         [SerializeField] private float skipIntervalSeconds = 0.035f;
 
         private Story story;
@@ -219,6 +229,16 @@ namespace ThreeMonthsOfSpring
             barSkipButton.onClick.AddListener(ToggleSkip);
             barBgmButton.onClick.AddListener(ToggleBgm);
             barTitleButton.onClick.AddListener(RequestReturnToTitle);
+
+            titleSettingsButton.onClick.AddListener(OpenSettings);
+            barSettingsButton.onClick.AddListener(OpenSettings);
+            settingsCloseButton.onClick.AddListener(() => settingsPanel.SetActive(false));
+            settingsResetButton.onClick.AddListener(ResetSettings);
+
+            titleQuitButton.onClick.AddListener(RequestQuit);
+            barQuitButton.onClick.AddListener(RequestQuit);
+
+            SetUpSettingsSliders();
 
             logCloseButton.onClick.AddListener(() => logPanel.SetActive(false));
             titleCreditsButton.onClick.AddListener(OpenCredits);
@@ -358,7 +378,8 @@ namespace ThreeMonthsOfSpring
                 || slotPanel.activeSelf
                 || confirmPanel.activeSelf
                 || creditsPanel.activeSelf
-                || endingsPanel.activeSelf;
+                || endingsPanel.activeSelf
+                || settingsPanel.activeSelf;
         }
 
         private void OpenEndings()
@@ -399,6 +420,7 @@ namespace ThreeMonthsOfSpring
             confirmPanel.SetActive(false);
             creditsPanel.SetActive(false);
             endingsPanel.SetActive(false);
+            settingsPanel.SetActive(false);
             controlBar.SetActive(false);
             choiceRoot.gameObject.SetActive(false);
             continueIndicator.SetActive(false);
@@ -856,7 +878,8 @@ namespace ThreeMonthsOfSpring
             bodyLabel.ForceMeshUpdate();
             int total = bodyLabel.textInfo.characterCount;
 
-            float interval = charactersPerSecond > 0f ? 1f / charactersPerSecond : 0f;
+            float speed = GameSettings.TypingSpeed;
+            float interval = speed > 0f ? 1f / speed : 0f;
 
             for (int visible = 1; visible <= total; visible++)
             {
@@ -1214,6 +1237,103 @@ namespace ThreeMonthsOfSpring
         {
             audioDirector.Muted = !audioDirector.Muted;
             RefreshBgmLabel();
+            RefreshSettingsValues();
+        }
+
+        // ------------------------------------------------------------
+        //  設定
+        // ------------------------------------------------------------
+
+        private void SetUpSettingsSliders()
+        {
+            typingSpeedSlider.minValue = GameSettings.TypingSpeedMin;
+            typingSpeedSlider.maxValue = GameSettings.TypingSpeedMax;
+            typingSpeedSlider.wholeNumbers = true;
+            typingSpeedSlider.onValueChanged.AddListener(value =>
+            {
+                GameSettings.TypingSpeed = value;
+                RefreshSettingsValues();
+            });
+
+            autoSpeedSlider.minValue = 0f;
+            autoSpeedSlider.maxValue = 1f;
+            autoSpeedSlider.onValueChanged.AddListener(value =>
+            {
+                GameSettings.AutoSpeed = value;
+                RefreshSettingsValues();
+            });
+
+            volumeSlider.minValue = 0f;
+            volumeSlider.maxValue = 1f;
+            volumeSlider.onValueChanged.AddListener(value =>
+            {
+                GameSettings.BgmVolume = value;
+                // 鳴っている曲に即座に反映する。調整結果をその場で聞けるように。
+                audioDirector.ApplyVolume();
+                RefreshSettingsValues();
+            });
+
+            PullSettingsIntoSliders();
+        }
+
+        /// <summary>保存された設定値をスライダーに反映する。onValueChanged は呼ばせない。</summary>
+        private void PullSettingsIntoSliders()
+        {
+            typingSpeedSlider.SetValueWithoutNotify(GameSettings.TypingSpeed);
+            autoSpeedSlider.SetValueWithoutNotify(GameSettings.AutoSpeed);
+            volumeSlider.SetValueWithoutNotify(GameSettings.BgmVolume);
+            RefreshSettingsValues();
+        }
+
+        private void RefreshSettingsValues()
+        {
+            typingSpeedValue.text = $"{GameSettings.TypingSpeed:0} 文字/秒";
+
+            // 待ち時間そのものを出す。「0.7」より「1行あたり約1.4秒」のほうが伝わる。
+            float sample = GameSettings.AutoBaseSeconds + 30f * GameSettings.AutoPerCharacterSeconds;
+            autoSpeedValue.text = $"1行あたり約 {sample:0.0} 秒";
+
+            volumeValue.text = audioDirector.Muted
+                ? "ミュート中"
+                : $"{GameSettings.BgmVolume * 100f:0} %";
+        }
+
+        private void OpenSettings()
+        {
+            PullSettingsIntoSliders();
+            settingsPanel.SetActive(true);
+        }
+
+        private void ResetSettings()
+        {
+            GameSettings.ResetToDefaults();
+            audioDirector.ApplyVolume();
+            PullSettingsIntoSliders();
+        }
+
+        // ------------------------------------------------------------
+        //  終了
+        // ------------------------------------------------------------
+
+        private void RequestQuit()
+        {
+            // 進行中かどうかで注意書きを変える。失うものが違うため。
+            string message = story != null
+                ? "ゲームを終了します。\nセーブしていない進行は失われます。"
+                : "ゲームを終了します。";
+
+            OpenConfirm(message, QuitGame);
+        }
+
+        private void QuitGame()
+        {
+            ReadHistory.Flush();
+
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         // ------------------------------------------------------------
@@ -1260,7 +1380,8 @@ namespace ThreeMonthsOfSpring
                 }
 
                 // 行の長さに応じて待つ。短い相槌で長く待たされないように。
-                float wait = autoBaseSeconds + (currentText?.Length ?? 0) * autoPerCharacterSeconds;
+                float wait = GameSettings.AutoBaseSeconds
+                    + (currentText?.Length ?? 0) * GameSettings.AutoPerCharacterSeconds;
                 float elapsed = 0f;
                 while (elapsed < wait)
                 {

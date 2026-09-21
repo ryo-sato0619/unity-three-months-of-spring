@@ -18,7 +18,6 @@ namespace ThreeMonthsOfSpring
         [SerializeField] private AudioSource sourceA;
         [SerializeField] private AudioSource sourceB;
         [SerializeField] private float fadeSeconds = 1.2f;
-        [SerializeField] private float volume = 0.55f;
 
         private bool usingA = true;
         private string currentKey;
@@ -32,8 +31,27 @@ namespace ThreeMonthsOfSpring
             {
                 PlayerPrefs.SetInt(MutePrefsKey, value ? 1 : 0);
                 PlayerPrefs.Save();
-                ApplyMute();
+                ApplyVolume();
             }
+        }
+
+        /// <summary>実際に鳴らす音量。ミュート中は 0。</summary>
+        private float TargetVolume => Muted ? 0f : GameSettings.BgmVolume;
+
+        /// <summary>
+        /// 設定画面で音量が変わったときに呼ぶ。
+        /// 鳴っている曲に即座に反映する（変更の結果をその場で聞けるように）。
+        /// </summary>
+        public void ApplyVolume()
+        {
+            // フェード中は CrossFade 側が音量を握っているので触らない。
+            if (fadeRoutine != null)
+            {
+                return;
+            }
+
+            Active.volume = Active.isPlaying ? TargetVolume : 0f;
+            Idle.volume = 0f;
         }
 
         private AudioSource Active => usingA ? sourceA : sourceB;
@@ -48,7 +66,7 @@ namespace ThreeMonthsOfSpring
                 source.volume = 0f;
             }
 
-            ApplyMute();
+            ApplyVolume();
         }
 
         /// <summary>
@@ -112,7 +130,7 @@ namespace ThreeMonthsOfSpring
                 to.Play();
             }
 
-            float target = Muted ? 0f : volume;
+            float target = TargetVolume;
             float fromStart = from.volume;
             float elapsed = 0f;
 
@@ -141,20 +159,6 @@ namespace ThreeMonthsOfSpring
             }
 
             fadeRoutine = null;
-        }
-
-        private void ApplyMute()
-        {
-            float target = Muted ? 0f : volume;
-
-            // フェード中は CrossFade 側が音量を握っているので触らない。
-            if (fadeRoutine != null)
-            {
-                return;
-            }
-
-            Active.volume = Active.isPlaying ? target : 0f;
-            Idle.volume = 0f;
         }
     }
 }
