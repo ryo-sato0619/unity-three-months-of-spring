@@ -85,7 +85,16 @@ Write-Host ""
 
 try {
     while ($listener.IsListening) {
-        $context = $listener.GetContext()
+        # ブラウザが転送の途中で接続を切ると例外が飛ぶ。
+        # 1 件の失敗でサーバ全体が止まらないよう、要求ごとに閉じ込める。
+        try {
+            $context = $listener.GetContext()
+        } catch {
+            if (-not $listener.IsListening) { break }
+            Write-Host ("接続の受付に失敗: " + $_.Exception.Message) -ForegroundColor DarkYellow
+            continue
+        }
+
         $request = $context.Request
         $response = $context.Response
 
@@ -127,10 +136,10 @@ try {
 
             Write-Host ("{0}  {1}  ({2:N1} MB)" -f $request.HttpMethod, $relative, ($length / 1MB)) -ForegroundColor DarkGray
         } catch {
-            $response.StatusCode = 500
-            Write-Host ("500  " + $_.Exception.Message) -ForegroundColor Red
+            # 転送中の切断はブラウザ側の都合でよく起きる。記録だけして続行する。
+            Write-Host ("中断  " + $_.Exception.Message) -ForegroundColor DarkYellow
         } finally {
-            $response.Close()
+            try { $response.Close() } catch { }
         }
     }
 } finally {

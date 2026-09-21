@@ -83,13 +83,17 @@ namespace ThreeMonthsOfSpring.EditorTools
         [MenuItem("Tools/三か月の春/ビルド/WebGL")]
         public static void BuildWebGL()
         {
-            string directory = Path.Combine(OutputRoot, "三か月の春_WebGL");
+            // 出力フォルダ名がそのまま Build/ 以下のファイル名になる。
+            // 非 ASCII のままだと配信先によって URL の解釈が揺れるため、英字にする。
+            string directory = Path.Combine(OutputRoot, ProductName + "_WebGL");
             Directory.CreateDirectory(directory);
 
-            // 圧縮を切っておくと、サーバ側の設定に関係なく配信できる。
-            // Brotli / Gzip は Content-Encoding を返せるサーバが要る。
-            // GitHub Pages のような静的ホスティングでも確実に動くほうを選ぶ。
-            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
+            // Brotli で圧縮し、展開はローダー側の JavaScript に任せる。
+            // GitHub Pages のような静的ホスティングは .br に Content-Encoding を
+            // 付けられないが、フォールバックを有効にしておけばサーバ設定に
+            // 依存せず動く。無圧縮だと 77MB、Brotli なら大幅に小さくなる。
+            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Brotli;
+            PlayerSettings.WebGL.decompressionFallback = true;
 
             PlayerSettings.defaultWebScreenWidth = 1920;
             PlayerSettings.defaultWebScreenHeight = 1080;
