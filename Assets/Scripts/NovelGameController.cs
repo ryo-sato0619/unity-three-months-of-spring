@@ -50,6 +50,9 @@ namespace ThreeMonthsOfSpring
             "Mylène Larnaud ／ Petr ／ kate.sade ／ JC Gellidon ／\n" +
             "Ryunosuke Kikuno ／ Pema G. Lama ／ Benjamin Child ／\n" +
             "Jelena Kostic ／ Weichao Deng ／ Lutz Stallknecht\n\n\n" +
+            "<align=center><color=#E0A96D>フォント</color></align>\n\n" +
+            "Noto Sans JP — Google / Noto CJK\n" +
+            "Licensed under the SIL Open Font License 1.1\n\n\n" +
             "<align=center><color=#E0A96D>ソフトウェア</color></align>\n\n" +
             "ink / ink-unity-integration — inkle Ltd. (MIT License)\n" +
             "TextMeshPro — Unity Technologies\n\n\n" +

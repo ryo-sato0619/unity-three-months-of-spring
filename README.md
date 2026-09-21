@@ -49,10 +49,8 @@ clone して Unity で開けばそのまま遊べます。
 ## 必要環境
 
 - **Unity 6000.6.2f1**（別バージョンでも動くはずですが、検証はこのバージョンのみ）
-- 日本語フォントがインストールされた OS
-  - Windows: 游ゴシック / メイリオ / MS ゴシック
-  - macOS: ヒラギノ角ゴ
-  - Linux: Noto Sans CJK JP など
+
+日本語フォント（Noto Sans JP）は同梱しているので、OS 側の準備は不要です。
 
 `git` が PATH に必要です。ink のパッケージを Git URL 経由で取得するため。
 
@@ -173,9 +171,21 @@ docs/
 
 - 効果音
 - 立ち絵の位置移動や表情以外の演出（揺れ、退場方向など）
-- 日本語フォントは OS のものを実行時に読み込むため、**配布ビルドでは
-  ライセンスの明確なフォント（Noto Sans JP など）を同梱してください**。
-  `JapaneseFontProvider.Override` に差し替えれば切り替わります。
+---
+
+## ビルド
+
+`Tools > 三か月の春 > ビルド >` から作れます。出力先はデスクトップ
+（環境変数 `TMS_BUILD_DIR` があればそちら）。
+
+| 対象 | 出力 | 必要なもの |
+|---|---|---|
+| Windows | `三か月の春_Windows/` | Windows Build Support |
+| Android (APK) | `三か月の春.apk` | Android Build Support（SDK / NDK / OpenJDK） |
+| WebGL | `三か月の春_WebGL/` | WebGL Build Support |
+
+設定は `Assets/Scripts/Editor/BuildTool.cs` にコードとして書いてあります。
+手作業の設定に依存しないので、同じ手順で同じものが出ます。
 
 ---
 

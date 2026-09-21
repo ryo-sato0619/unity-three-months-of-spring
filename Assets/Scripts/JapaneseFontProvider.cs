@@ -4,18 +4,23 @@ using UnityEngine;
 namespace ThreeMonthsOfSpring
 {
     /// <summary>
-    /// OS にインストールされている日本語フォントから TMP のフォントアセットを実行時に生成する。
+    /// 日本語が表示できる TMP フォントアセットを供給する。
     ///
-    /// フォントファイル自体をリポジトリに含めないための仕組み。TMP の既定フォント
-    /// (LiberationSans) には日本語グリフが無く、そのままでは全文字が豆腐になる。
-    /// AtlasPopulationMode.DynamicOS で生成されるため、グリフは必要になった時点で
-    /// OS のフォントから取り込まれる。
+    /// TMP の既定フォント (LiberationSans) には日本語グリフが無く、
+    /// そのままでは全文字が豆腐になるため、次の順で解決する。
     ///
-    /// 配布ビルドを作る場合は、ライセンスの明確なフォント (Noto Sans JP など) を
-    /// 同梱して <see cref="Override"/> に差し替えることを推奨する。
+    ///   1. <see cref="Override"/>（コードから明示指定された場合）
+    ///   2. Resources/Fonts の同梱フォント（Noto Sans JP）
+    ///   3. OS にインストールされているフォント
+    ///
+    /// 2 を先に見るのは、Android や WebGL では 3 が使えないため。
+    /// 開発機では 3 でも足りるが、配布ビルドでは同梱フォントが無いと日本語が出ない。
     /// </summary>
     public static class JapaneseFontProvider
     {
+        /// <summary>同梱フォントの置き場所（Resources からの相対パス、拡張子なし）。</summary>
+        private const string BundledFontResourcePath = "Fonts/NotoSansJP SDF";
+
         /// <summary>明示的に使いたいフォントアセットがある場合に設定する。</summary>
         public static TMP_FontAsset Override { get; set; }
 
@@ -58,6 +63,19 @@ namespace ThreeMonthsOfSpring
             }
 
             resolved = true;
+
+            // 同梱フォントを優先する。どの環境でも同じ見た目になり、
+            // OS のフォントが使えない Android / WebGL でも成立するため。
+            var bundled = Resources.Load<TMP_FontAsset>(BundledFontResourcePath);
+            if (bundled != null)
+            {
+                cached = bundled;
+                return cached;
+            }
+
+            Debug.Log(
+                $"[フォント] 同梱フォントが見つからないため OS のフォントを探します: " +
+                $"Resources/{BundledFontResourcePath}");
 
             foreach (string family in CandidateFamilies)
             {

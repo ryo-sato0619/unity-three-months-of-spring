@@ -93,9 +93,16 @@ http://creativecommons.org/licenses/by/4.0/
 
 ## フォント
 
-日本語フォントは同梱していません。実行時に OS のフォントから
-TextMeshPro のフォントアセットを生成しています（`JapaneseFontProvider.cs`）。
+**Noto Sans JP** (`NotoSansJP-Regular.otf`) を同梱しています。
 
-配布ビルドを作る場合は、ライセンスの明確なフォント
-（[Noto Sans JP](https://fonts.google.com/noto/specimen/Noto+Sans+JP) など、SIL Open Font License）
-を同梱し、そのクレジットをここに追記してください。
+- 提供: Google / [Noto CJK](https://github.com/notofonts/noto-cjk)
+- ライセンス: **SIL Open Font License 1.1**
+- ライセンス全文: [`Assets/Fonts/NotoSansJP-LICENSE.txt`](Assets/Fonts/NotoSansJP-LICENSE.txt)
+
+同梱しているのは、実行時に OS のフォントを読む方式では
+Android や WebGL で日本語が表示できないためです。
+フォント自体は改変しておらず、TextMeshPro のフォントアセット
+（`Assets/Resources/Fonts/NotoSansJP SDF.asset`）を生成して参照しています。
+
+解決の優先順位は `JapaneseFontProvider.cs` にあり、同梱フォント →
+OS のフォント、の順で探します。

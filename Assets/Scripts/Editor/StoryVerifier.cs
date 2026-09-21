@@ -156,6 +156,31 @@ namespace ThreeMonthsOfSpring.EditorTools
                 }
             }
 
+            // --- 日本語フォント ---
+            // 配布ビルドで最も壊れやすい箇所。OS のフォントに頼っていると
+            // Android / WebGL で全文字が豆腐になるため、同梱の有無をここで見る。
+            sb.AppendLine();
+            sb.AppendLine("--- 日本語フォント ---");
+            var bundledFont = Resources.Load<TMPro.TMP_FontAsset>("Fonts/NotoSansJP SDF");
+            if (bundledFont == null)
+            {
+                sb.AppendLine("  未同梱  実行時に OS のフォントを探します");
+                sb.AppendLine("          配布ビルド（特に Android / WebGL）では日本語が出ない恐れがあります");
+            }
+            else
+            {
+                sb.AppendLine($"  OK      {bundledFont.name}");
+                sb.AppendLine($"          元フォント: " +
+                    (bundledFont.sourceFontFile != null ? bundledFont.sourceFontFile.name : "参照が切れています"));
+                sb.AppendLine($"          生成モード: {bundledFont.atlasPopulationMode}");
+
+                if (bundledFont.sourceFontFile == null)
+                {
+                    // Dynamic は元フォントからグリフを起こすので、参照が切れていると実行時に何も出ない。
+                    ok = false;
+                }
+            }
+
             if (ok)
             {
                 Debug.Log(sb.ToString() + "\n検証に成功しました。");
