@@ -541,18 +541,19 @@ namespace ThreeMonthsOfSpring.EditorTools
         {
             bar = NewUI("ControlBar", parent);
             var rt = (RectTransform)bar.transform;
-            // 左寄せにするのは、立ち絵を画面右に置いているため。
-            // 右寄せだと立ち絵の上に重なってしまう。
-            rt.anchorMin = new Vector2(0f, 0f);
-            rt.anchorMax = new Vector2(0f, 0f);
-            rt.pivot = new Vector2(0f, 0f);
-            // メッセージウィンドウ (高さ330 + 下余白60) のすぐ上。
-            rt.anchoredPosition = new Vector2(90f, 60f + 330f + 12f);
+            // メッセージウィンドウの内側・右上に置く。
+            // ウィンドウの外（上）に出すと、画面右に立つ立ち絵の足元と重なる。
+            // 内側なら話者名（左上）と同じ行に収まり、立ち絵とも干渉しない。
+            // 右端をウィンドウの内側に合わせるため、画面右端を基準にする。
+            rt.anchorMin = new Vector2(1f, 0f);
+            rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(-114f, 330f);
             rt.sizeDelta = new Vector2(0f, 48f);
 
             var layout = bar.AddComponent<HorizontalLayoutGroup>();
             layout.spacing = 8f;
-            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childAlignment = TextAnchor.MiddleRight;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = false;

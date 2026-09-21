@@ -829,12 +829,22 @@ namespace ThreeMonthsOfSpring
         private const float CharacterTopMargin = 24f;
 
         /// <summary>
+        /// 画面に見えている範囲（メッセージウィンドウより上）が、全身の何割にあたるか。
+        /// 0.5 なら頭から腰までが見え、それより下はウィンドウの裏に隠れる。
+        /// 小さくするほど立ち絵は大きく写るが、見える範囲は顔まわりに寄る。
+        /// </summary>
+        [SerializeField, Range(0.3f, 1f)] private float characterVisibleRatio = 0.5f;
+
+        /// <summary>
         /// 立ち絵の大きさと縦位置を画面の高さから決める。
         ///
         /// 高さを固定にすると、基準（1080）より縦が短い画面で頭が切れる。
         /// 横長の Android 端末では CanvasScaler の計算上、基準の画面高が
         /// 1080 より小さくなるため、これが実際に起きる。
-        /// メッセージウィンドウの上端に足を置き、頭が画面内に収まる高さに合わせる。
+        ///
+        /// 頭の位置を画面上端から一定に保ち、そこからメッセージウィンドウの上端までが
+        /// 全身の <see cref="characterVisibleRatio"/> 割にあたる大きさに合わせる。
+        /// 足元はウィンドウの裏に隠れるが、そのぶん顔が大きく写る。
         /// </summary>
         private void FitCharacterSprite()
         {
@@ -849,17 +859,22 @@ namespace ThreeMonthsOfSpring
                 return;
             }
 
-            float height = screenHeight - CharacterTopMargin - MessageWindowTop;
-            if (height <= 0f)
+            // 画面上端の余白からメッセージウィンドウの上端までが「見える範囲」。
+            float headTop = screenHeight - CharacterTopMargin;
+            float visibleHeight = headTop - MessageWindowTop;
+            if (visibleHeight <= 0f)
             {
                 return;
             }
+
+            float ratio = Mathf.Clamp(characterVisibleRatio, 0.3f, 1f);
+            float height = visibleHeight / ratio;
 
             RectTransform rt = characterSprite.rectTransform;
             // 幅は余裕を持たせる。preserveAspect が内側に収めるので、
             // 高さ基準で決まり、絵の縦横比が変わっても歪まない。
             rt.sizeDelta = new Vector2(height, height);
-            rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, MessageWindowTop);
+            rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, headTop - height);
         }
 
         private void FitBackground()
