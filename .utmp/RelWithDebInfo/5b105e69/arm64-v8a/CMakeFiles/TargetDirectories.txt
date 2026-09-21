@@ -1,0 +1,8 @@
+C:/dev/three-months-of-spring/.utmp/RelWithDebInfo/5b105e69/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/dev/three-months-of-spring/.utmp/RelWithDebInfo/5b105e69/arm64-v8a/CMakeFiles/rebuild_cache.dir
+C:/dev/three-months-of-spring/.utmp/RelWithDebInfo/5b105e69/arm64-v8a/GameActivity/CMakeFiles/game.dir
+C:/dev/three-months-of-spring/.utmp/RelWithDebInfo/5b105e69/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+C:/dev/three-months-of-spring/.utmp/RelWithDebInfo/5b105e69/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir
+C:/dev/three-months-of-spring/.utmp/RelWithDebInfo/5b105e69/arm64-v8a/FramePacing/CMakeFiles/swappywrapper.dir
+C:/dev/three-months-of-spring/.utmp/RelWithDebInfo/5b105e69/arm64-v8a/FramePacing/CMakeFiles/edit_cache.dir
+C:/dev/three-months-of-spring/.utmp/RelWithDebInfo/5b105e69/arm64-v8a/FramePacing/CMakeFiles/rebuild_cache.dir
